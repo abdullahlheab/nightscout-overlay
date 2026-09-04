@@ -9,6 +9,7 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
 - Runs in the system tray. Nothing else. No accounts, no telemetry, no server in the middle.
+- Updates itself. Installed builds fetch new releases from GitHub in the background and apply them on restart.
 - Windows, macOS and Linux.
 
 ## Install
@@ -74,6 +75,24 @@ administrator terminal once. After that first run the cache is in place and a no
 
 Pushing a tag like `v0.2.0` runs the GitHub Actions workflow in
 `.github/workflows/release.yml`, which builds all three platforms and attaches them to a GitHub Release.
+
+## Publishing an update
+
+Every installed copy checks GitHub Releases about 15 seconds after launch and every 6 hours after that.
+When a newer version exists it is downloaded in the background and installed the next time the app is
+restarted or quit; the tray menu and the Settings window show progress and offer "Restart to update".
+Portable builds cannot replace their own exe, so they show a notification linking to the download instead.
+
+To ship a new version:
+
+```bash
+npm run release:patch      # bumps 0.1.0 -> 0.1.1, commits, tags v0.1.1, pushes
+```
+
+Use `release:minor` for 0.1.x -> 0.2.0. The push of the tag triggers the release workflow, which builds
+Windows, macOS and Linux and publishes a GitHub Release with the installers plus the `latest*.yml` files
+that the updater reads. The release must be published (not a draft) for clients to see it; the workflow
+does that automatically. Keep the GitHub repository public, or updates will not be reachable.
 
 ## How it works
 

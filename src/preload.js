@@ -14,5 +14,11 @@ contextBridge.exposeInMainWorld('api', {
   testConnection: (draft) => ipcRenderer.invoke('config:test', draft),
   configPath: () => ipcRenderer.invoke('config:path'),
   closeSettings: () => ipcRenderer.send('settings:close'),
-  openExternal: (url) => ipcRenderer.send('open-external', url)
+  openExternal: (url) => ipcRenderer.send('open-external', url),
+  // updates
+  updateState: () => ipcRenderer.invoke('update:state'),
+  onUpdateState: (cb) => ipcRenderer.on('update:state', (_e, s) => cb(s)),
+  checkForUpdates: () => ipcRenderer.send('update:check'),
+  installUpdate: () => ipcRenderer.send('update:install'),
+  openDownloadPage: () => ipcRenderer.send('update:open')
 });

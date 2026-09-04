@@ -3,6 +3,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, globalShortcut, sc
 const path = require('path');
 const store = require('./config');
 const ns = require('./nightscout');
+const updater = require('./updater');
 
 let config = null;
 let overlayWin = null;
@@ -164,7 +165,7 @@ function openSettings() {
 
 // ---------- tray ----------
 function trayTitle() {
-  if (!lastPayload || lastPayload.error) return 'Nightscout Overlay';
+  if (!lastPayload || lastPayload.error) return 'Nightscout Overlay v' + app.getVersion();
   return lastPayload.display + ' ' + lastPayload.units + ' ' + lastPayload.arrow +
     '  ' + lastPayload.deltaDisplay + '  (' + lastPayload.ageMin + 'm ago)';
 }
@@ -175,6 +176,7 @@ function buildMenu() {
     { type: 'separator' },
     { label: 'Settings...', click: openSettings },
     { label: 'Refresh now', click: poll },
+    updateMenuItem(),
     { type: 'separator' },
     { label: 'Click-through (Ctrl+Alt+G)', type: 'checkbox', checked: !!config.clickThrough, click: toggleClickThrough },
     { label: 'Hide overlay (Ctrl+Alt+H)', type: 'checkbox', checked: hidden, click: toggleHidden },
@@ -186,6 +188,18 @@ function buildMenu() {
     { label: 'Open Nightscout site', enabled: !!config.url, click: () => shell.openExternal(config.url) },
     { label: 'Quit', click: () => app.quit() }
   ]);
+}
+
+function updateMenuItem() {
+  const u = updater.get();
+  const item = { label: updater.describe(u), enabled: true };
+  switch (u.status) {
+    case 'disabled': case 'checking': case 'downloading': item.enabled = false; break;
+    case 'ready': item.click = updater.install; break;
+    case 'available': item.click = updater.openDownloadPage; break;
+    default: item.click = updater.check;
+  }
+  return item;
 }
 
 function createTray() {
@@ -235,6 +249,10 @@ ipcMain.handle('config:test', async (_e, draft) => {
   catch (e) { return { ok: false, error: e.message || String(e) }; }
 });
 ipcMain.handle('config:path', () => store.file());
+ipcMain.handle('update:state', () => ({ ...updater.get(), text: updater.describe() }));
+ipcMain.on('update:check', () => updater.check());
+ipcMain.on('update:install', () => updater.install());
+ipcMain.on('update:open', () => updater.openDownloadPage());
 let scaleSaveTimer = null;
 ipcMain.on('overlay:set-scale', (_e, scale) => {
   const s = Math.min(3, Math.max(0.5, Number(scale) || 1));
@@ -263,6 +281,11 @@ if (!app.requestSingleInstanceLock()) {
     createTray();
     createOverlay();
     startPolling();
+    updater.init();
+    updater.onChange((u) => {
+      updateTray();
+      if (settingsWin && !settingsWin.isDestroyed()) settingsWin.webContents.send('update:state', { ...u, text: updater.describe(u) });
+    });
 
     globalShortcut.register('CommandOrControl+Alt+G', toggleClickThrough);
     globalShortcut.register('CommandOrControl+Alt+H', toggleHidden);

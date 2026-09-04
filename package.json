@@ -13,7 +13,9 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist:linux": "electron-builder --linux",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -60,11 +62,17 @@
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "publish": {
-      "provider": "github"
+      "provider": "github",
+      "owner": "abdullahlheab",
+      "repo": "nightscout-overlay",
+      "releaseType": "release"
     },
     "portable": {
       "artifactName": "${productName}-Portable-${version}-${os}-${arch}.${ext}"
     }
   },
-  "repository": "github:abdullahlheab/nightscout-overlay"
+  "repository": "github:abdullahlheab/nightscout-overlay",
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
 }

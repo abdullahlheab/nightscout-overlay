@@ -66,6 +66,33 @@
     if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); }
   });
 
+  // ---- updates ----
+  let updState = null;
+  function renderUpdate(s) {
+    updState = s;
+    $('version').textContent = 'Version ' + s.version + (s.portable ? ' (portable)' : '');
+    const btn = $('updateBtn');
+    const text = $('updateText');
+    btn.style.display = ''; text.textContent = '';
+    switch (s.status) {
+      case 'disabled': btn.style.display = 'none'; text.textContent = s.text; break;
+      case 'checking': case 'downloading': btn.disabled = true; btn.textContent = s.text; break;
+      case 'ready': btn.disabled = false; btn.textContent = 'Restart to update to v' + s.latest; btn.classList.add('primary'); break;
+      case 'available': btn.disabled = false; btn.textContent = 'Download v' + s.latest; btn.classList.add('primary'); break;
+      case 'none': btn.disabled = false; btn.textContent = 'Check for updates'; text.textContent = 'Up to date'; break;
+      case 'error': btn.disabled = false; btn.textContent = 'Retry update check'; text.textContent = s.error || 'Update check failed'; break;
+      default: btn.disabled = false; btn.textContent = 'Check for updates';
+    }
+  }
+  $('updateBtn').addEventListener('click', () => {
+    if (!updState) return;
+    if (updState.status === 'ready') window.api.installUpdate();
+    else if (updState.status === 'available') window.api.openDownloadPage();
+    else window.api.checkForUpdates();
+  });
+  window.api.onUpdateState(renderUpdate);
+  renderUpdate(await window.api.updateState());
+
   fill(await window.api.getConfig());
   $('path').textContent = 'Settings file: ' + (await window.api.configPath());
 })();
