@@ -232,6 +232,16 @@ ipcMain.handle('config:test', async (_e, draft) => {
   catch (e) { return { ok: false, error: e.message || String(e) }; }
 });
 ipcMain.handle('config:path', () => store.file());
+let scaleSaveTimer = null;
+ipcMain.on('overlay:set-scale', (_e, scale) => {
+  const s = Math.min(3, Math.max(0.5, Number(scale) || 1));
+  if (Math.abs(s - config.scale) < 0.001) return;
+  config.scale = Math.round(s * 100) / 100;
+  resizeOverlay();
+  pushToOverlay();
+  clearTimeout(scaleSaveTimer);
+  scaleSaveTimer = setTimeout(() => store.save(config), 400);
+});
 ipcMain.on('overlay:menu', () => {
   if (overlayWin) buildMenu().popup({ window: overlayWin });
 });

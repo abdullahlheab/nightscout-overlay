@@ -109,5 +109,34 @@
   window.addEventListener('contextmenu', (e) => { e.preventDefault(); window.api.showMenu(); });
   window.addEventListener('resize', () => data && render());
 
+  // ---- resizing: drag the corner grip, or Ctrl+scroll ----
+  const grip = $('grip');
+  let drag = null;
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || !cfg) return;
+    e.preventDefault(); e.stopPropagation();
+    grip.setPointerCapture(e.pointerId);
+    drag = { x: e.screenX, y: e.screenY, scale: Number(cfg.scale) || 1, w: window.outerWidth, h: window.outerHeight };
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    // scale by whichever axis the user stretched more
+    const fx = (drag.w + (e.screenX - drag.x)) / drag.w;
+    const fy = (drag.h + (e.screenY - drag.y)) / drag.h;
+    const f = Math.abs(fx - 1) >= Math.abs(fy - 1) ? fx : fy;
+    window.api.setScale(drag.scale * f);
+  });
+  const endDrag = (e) => { if (drag) { drag = null; try { grip.releasePointerCapture(e.pointerId); } catch {} } };
+  grip.addEventListener('pointerup', endDrag);
+  grip.addEventListener('pointercancel', endDrag);
+  grip.addEventListener('click', (e) => e.stopPropagation());
+
+  window.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey || !cfg) return;
+    e.preventDefault();
+    const step = e.deltaY < 0 ? 0.1 : -0.1;
+    window.api.setScale((Number(cfg.scale) || 1) + step);
+  }, { passive: false });
+
   setInterval(() => { if (data && data.display !== undefined) ageEl.textContent = ageText(data); }, 20000);
 })();

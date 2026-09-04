@@ -61,6 +61,22 @@
   body:hover #menu { opacity: 1; }
   #menu:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
   body.click-through #menu { display: none; }
+
+  #grip {
+    -webkit-app-region: no-drag;
+    position: absolute; right: 0; bottom: 0;
+    width: 1rem; height: 1rem; cursor: nwse-resize;
+    opacity: 0; transition: opacity .15s;
+    touch-action: none;
+  }
+  #grip::after {
+    content: ""; position: absolute; right: 0.25rem; bottom: 0.25rem;
+    width: 0.45rem; height: 0.45rem;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+    border-radius: 0 0 2px 0;
+  }
+  body:hover #grip { opacity: 0.8; }
+  body.click-through #grip { display: none; }
 </style>
 </head>
 <body>
@@ -76,6 +92,7 @@
     <div id="err"></div>
     <canvas id="graph"></canvas>
     <div id="menu" title="Menu">&#8943;</div>
+    <div id="grip" title="Drag to resize (or Ctrl+scroll)"></div>
   </div>
   <script src="overlay.js"></script>
 </body>

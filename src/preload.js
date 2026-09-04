@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   onConfig: (cb) => ipcRenderer.on('overlay:config', (_e, c) => cb(c)),
   showMenu: () => ipcRenderer.send('overlay:menu'),
   openSettings: () => ipcRenderer.send('overlay:open-settings'),
+  setScale: (s) => ipcRenderer.send('overlay:set-scale', s),
   // settings window
   getConfig: () => ipcRenderer.invoke('config:get'),
   setConfig: (c) => ipcRenderer.invoke('config:set', c),

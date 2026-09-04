@@ -4,7 +4,7 @@ A tiny transparent glucose readout that floats above every other window, includi
 fullscreen apps. It reads from **your own Nightscout site** and shows the current value, trend
 arrow, change since the last reading, how old the reading is, and a mini graph of the last few hours.
 
-- Always on top, frameless, transparent. Drag it anywhere. Position is remembered.
+- Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
@@ -40,6 +40,7 @@ On Windows click **More info** then **Run anyway**. On macOS run
 | Action | How |
 |--------|-----|
 | Move | drag the overlay |
+| Resize | drag the bottom-right corner, `Ctrl+scroll` over it, or the Size slider in settings |
 | Menu | right-click the overlay, click the `...` that appears on hover, or right-click the tray icon |
 | Click-through on/off | `Ctrl+Alt+G` (`Cmd+Alt+G` on Mac) |
 | Hide / show | `Ctrl+Alt+H`, or left-click the tray icon |
