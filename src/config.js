@@ -27,7 +27,8 @@ function file() {
 
 function load() {
   try {
-    const raw = JSON.parse(fs.readFileSync(file(), 'utf8'));
+    // strip a BOM in case the file was hand-edited with an editor that adds one
+    const raw = JSON.parse(fs.readFileSync(file(), 'utf8').replace(/^﻿/, ''));
     return { ...DEFAULTS, ...raw, thresholds: { ...DEFAULTS.thresholds, ...(raw.thresholds || {}) } };
   } catch {
     return { ...DEFAULTS, thresholds: { ...DEFAULTS.thresholds } };

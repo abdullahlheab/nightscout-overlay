@@ -47,6 +47,9 @@ function createOverlay() {
 
   overlayWin = new BrowserWindow({
     width, height, x: pos.x, y: pos.y,
+    // Windows enforces a ~136px minimum on windows with no explicit minimum, which blocked shrinking
+    minWidth: 1, minHeight: 1,
+    thickFrame: false,
     transparent: true,
     frame: false,
     resizable: false,
@@ -107,10 +110,10 @@ function publicConfig() {
 function resizeOverlay() {
   if (!overlayWin) return;
   const { width, height } = overlaySize();
-  overlayWin.setSize(width, height);
   const [x, y] = overlayWin.getPosition();
   const p = clampToScreen({ x, y });
-  overlayWin.setPosition(p.x, p.y);
+  overlayWin.setMinimumSize(1, 1);
+  overlayWin.setBounds({ x: p.x, y: p.y, width, height });
 }
 
 // ---------- polling ----------
