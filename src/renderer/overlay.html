@@ -77,6 +77,22 @@
   }
   body:hover #grip { opacity: 0.8; }
   body.click-through #grip { display: none; }
+
+  #alertBar {
+    flex: none; display: flex; align-items: center; gap: 0.4rem;
+    margin-top: 0.3rem; height: 1.5rem;
+  }
+  #alertBar.hidden { display: none; }
+  #alertText { flex: 1; font-size: 0.72rem; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #ack {
+    -webkit-app-region: no-drag; cursor: pointer;
+    font: inherit; font-size: 0.68rem; font-weight: 600; line-height: 1;
+    padding: 0.3rem 0.55rem; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: var(--fg);
+  }
+  #ack:hover { background: rgba(255,255,255,0.22); }
+  #card.alerting { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent), 0 4px 16px rgba(0,0,0,0.35); }
+  #card.alerting.stale, #card.alerting.test { --accent: #60a5fa; }
 </style>
 </head>
 <body>
@@ -91,6 +107,7 @@
     </div>
     <div id="err"></div>
     <canvas id="graph"></canvas>
+    <div id="alertBar" class="hidden"><span id="alertText"></span><button id="ack" type="button" title="Dismiss and snooze this alert">I see it</button></div>
     <div id="menu" title="Menu">&#8943;</div>
     <div id="grip" title="Drag to resize (or Ctrl+scroll)"></div>
   </div>

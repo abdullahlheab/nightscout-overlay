@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('api', {
   showMenu: () => ipcRenderer.send('overlay:menu'),
   openSettings: () => ipcRenderer.send('overlay:open-settings'),
   setScale: (s) => ipcRenderer.send('overlay:set-scale', s),
+  onAlert: (cb) => ipcRenderer.on('overlay:alert', (_e, a) => cb(a)),
+  acknowledgeAlert: () => ipcRenderer.send('overlay:ack'),
+  testAlert: () => ipcRenderer.send('alert:test'),
   // settings window
   getConfig: () => ipcRenderer.invoke('config:get'),
   setConfig: (c) => ipcRenderer.invoke('config:set', c),

@@ -101,6 +101,44 @@
     ctx.fill();
   }
 
+  // ---- alerts ----
+  const alertBar = $('alertBar'), alertText = $('alertText'), ackBtn = $('ack');
+  let audioCtx = null;
+  const PATTERNS = {
+    warn:   [[660, 0], [880, 0.22]],
+    urgent: [[660, 0], [880, 0.2], [1100, 0.4], [660, 0.9], [880, 1.1], [1100, 1.3]],
+    stale:  [[440, 0]]
+  };
+  function chime(kind, volume) {
+    try {
+      audioCtx = audioCtx || new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const v = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0.3)) * 0.35; // soft by design
+      if (v <= 0) return;
+      const t0 = audioCtx.currentTime + 0.05;
+      for (const [freq, at] of PATTERNS[kind] || PATTERNS.warn) {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t0 + at);
+        g.gain.exponentialRampToValueAtTime(v, t0 + at + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.35);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(t0 + at); o.stop(t0 + at + 0.4);
+      }
+    } catch { /* no audio device */ }
+  }
+  function showAlert(a) {
+    if (!a) { alertBar.classList.add('hidden'); card.classList.remove('alerting', 'test'); return; }
+    alertText.textContent = a.message;
+    alertBar.classList.remove('hidden');
+    card.classList.add('alerting');
+    card.classList.toggle('test', a.type === 'test');
+    if (a.sound) chime(a.sound, a.volume);
+    if (data) render();
+  }
+  ackBtn.addEventListener('click', (e) => { e.stopPropagation(); window.api.acknowledgeAlert(); });
+  window.api.onAlert(showAlert);
+
   window.api.onConfig(applyConfig);
   window.api.onData((p) => { data = p; render(); });
 

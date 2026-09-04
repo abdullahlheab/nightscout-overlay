@@ -6,6 +6,7 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
+- Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Reminds you every 10 minutes until you dismiss it, then stays quiet for 30 minutes unless things get worse.
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
 - Runs in the system tray. Nothing else. No accounts, no telemetry, no server in the middle.
@@ -47,6 +48,13 @@ On Windows click **More info** then **Run anyway**. On macOS run
 | Hide / show | `Ctrl+Alt+H`, or left-click the tray icon |
 | Settings | `Ctrl+Alt+S` |
 | Quit | tray menu -> Quit |
+
+When an alert fires, the card glows, plays a short two-note chime at low volume, and shows an **I see it**
+button. Clicking it hides the alert and snoozes that condition for 30 minutes (configurable). If it gets
+worse, for example low turns into urgent low, the alert comes back through the snooze. Back in range
+resets everything. Volume, which conditions alert, and the reminder and snooze times are in Settings,
+where a **Test alert** button lets you hear it. Alerts always take the mouse, even in click-through mode,
+so the button can be clicked.
 
 In click-through mode the mouse passes straight through the overlay. Use the shortcut or the tray
 menu to turn it off again.
@@ -102,6 +110,8 @@ transparent, always-on-top `BrowserWindow`. Your token is only ever sent to the 
 
 - `src/main.js` window, tray, shortcuts, polling, IPC
 - `src/nightscout.js` API client and the pure `buildPayload()` that turns entries into what is displayed
+- `src/alerts.js` alert state machine (when to chime, repeat, snooze)
+- `src/updater.js` auto-update via GitHub Releases
 - `src/renderer/overlay.*` the overlay itself
 - `src/renderer/settings.*` the settings window
 

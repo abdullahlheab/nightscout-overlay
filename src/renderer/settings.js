@@ -4,6 +4,7 @@
   const fields = ['url', 'token', 'units', 'historyHours', 'scale', 'opacity', 'showGraph', 'showDelta', 'showAge',
     'refreshSeconds', 'staleMinutes', 'clickThrough', 'openAtLogin'];
   const thresholdKeys = ['bgLow', 'bgTargetBottom', 'bgTargetTop', 'bgHigh'];
+  const alertMap = { enabled: 'alertsEnabled', low: 'alertLow', high: 'alertHigh', urgent: 'alertUrgent', stale: 'alertStale', volume: 'alertVolume', repeatMinutes: 'alertRepeat', snoozeMinutes: 'alertSnooze' };
 
   function fill(cfg) {
     for (const f of fields) {
@@ -12,6 +13,8 @@
       else el.value = cfg[f] ?? '';
     }
     for (const k of thresholdKeys) $(k).value = cfg.thresholds && cfg.thresholds[k] ? cfg.thresholds[k] : '';
+    const al = cfg.alerts || {};
+    for (const [k, id] of Object.entries(alertMap)) { const el = $(id); if (el.type === 'checkbox') el.checked = !!al[k]; else el.value = al[k] ?? ''; }
     updateRangeLabels();
   }
 
@@ -26,6 +29,8 @@
       else out[f] = el.value.trim();
     }
     for (const k of thresholdKeys) out.thresholds[k] = $(k).value === '' ? null : num($(k).value, null);
+    out.alerts = {};
+    for (const [k, id] of Object.entries(alertMap)) { const el = $(id); out.alerts[k] = el.type === 'checkbox' ? el.checked : num(el.value, undefined); }
     if (out.url && !/^https?:\/\//i.test(out.url)) out.url = 'https://' + out.url;
     return out;
   }
@@ -33,9 +38,12 @@
   function updateRangeLabels() {
     $('scaleVal').textContent = Number($('scale').value).toFixed(1) + 'x';
     $('opacityVal').textContent = Math.round(Number($('opacity').value) * 100) + '%';
+    $('alertVolumeVal').textContent = Math.round(Number($('alertVolume').value) * 100) + '%';
   }
   $('scale').addEventListener('input', updateRangeLabels);
   $('opacity').addEventListener('input', updateRangeLabels);
+  $('alertVolume').addEventListener('input', updateRangeLabels);
+  $('testAlert').addEventListener('click', async () => { await save(); window.api.testAlert(); });
 
   async function save() {
     const cfg = await window.api.setConfig(collect());

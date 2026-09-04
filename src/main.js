@@ -1,9 +1,16 @@
 'use strict';
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, globalShortcut, screen, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, globalShortcut, screen, shell, Notification } = require('electron');
 const path = require('path');
 const store = require('./config');
 const ns = require('./nightscout');
 const updater = require('./updater');
+const alerts = require('./alerts');
+
+// Alert chimes are played by the overlay page without a user gesture.
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
+// Lets a dev copy run next to an installed one: separate config and single-instance lock.
+if (process.env.NS_OVERLAY_USER_DATA) app.setPath('userData', process.env.NS_OVERLAY_USER_DATA);
 
 let config = null;
 let overlayWin = null;
@@ -13,6 +20,7 @@ let pollTimer = null;
 let statusCache = null;
 let lastPayload = null;
 let hidden = false;
+let activeAlert = null;
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -21,7 +29,7 @@ const PRELOAD = path.join(__dirname, 'preload.js');
 function overlaySize() {
   const s = Number(config.scale) || 1;
   const w = 170;
-  const h = 62 + (config.showGraph ? 44 : 0);
+  const h = 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0);
   return { width: Math.round(w * s), height: Math.round(h * s) };
 }
 
@@ -93,7 +101,8 @@ function createOverlay() {
 
 function applyClickThrough() {
   if (!overlayWin) return;
-  overlayWin.setIgnoreMouseEvents(!!config.clickThrough, { forward: true });
+  // An active alert always takes the mouse so the "I see it" button can be clicked.
+  overlayWin.setIgnoreMouseEvents(!!config.clickThrough && !activeAlert, { forward: true });
   updateTray();
 }
 
@@ -101,6 +110,7 @@ function pushToOverlay() {
   if (!overlayWin || overlayWin.isDestroyed()) return;
   overlayWin.webContents.send('overlay:config', publicConfig());
   if (lastPayload) overlayWin.webContents.send('overlay:data', lastPayload);
+  overlayWin.webContents.send('overlay:alert', activeAlert);
 }
 
 function publicConfig() {
@@ -132,10 +142,29 @@ async function poll() {
     lastPayload = { ...(lastPayload || { history: [] }), error: e.message || String(e), fetchedAt: Date.now() };
     statusCache = null; // re-fetch server settings next time in case URL/token changed
   }
+  const nextAlert = alerts.evaluate(lastPayload, config).show;
+  // a test alert stays until dismissed; a real one replaces it
+  if (nextAlert || !(activeAlert && activeAlert.type === 'test')) applyAlert(nextAlert);
   pushToOverlay();
   updateTray();
   // Some fullscreen apps steal the top spot; re-assert it.
   if (overlayWin && !hidden) overlayWin.setAlwaysOnTop(true, 'screen-saver');
+}
+
+// ---------- alerts ----------
+function applyAlert(alert) {
+  const wasActive = !!activeAlert;
+  activeAlert = alert;
+  if (wasActive !== !!alert) { resizeOverlay(); applyClickThrough(); }
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:alert', alert);
+  if (alert && alert.sound && hidden && Notification.isSupported()) {
+    new Notification({ title: 'Nightscout Overlay', body: alert.message, silent: true }).show();
+  }
+}
+
+function acknowledgeAlert() {
+  alerts.acknowledge(config);
+  applyAlert(null);
 }
 
 function startPolling() {
@@ -176,6 +205,7 @@ function buildMenu() {
     { type: 'separator' },
     { label: 'Settings...', click: openSettings },
     { label: 'Refresh now', click: poll },
+    { label: 'I see it (dismiss alert)', visible: !!activeAlert, click: acknowledgeAlert },
     updateMenuItem(),
     { type: 'separator' },
     { label: 'Click-through (Ctrl+Alt+G)', type: 'checkbox', checked: !!config.clickThrough, click: toggleClickThrough },
@@ -234,7 +264,11 @@ function toggleHidden() {
 ipcMain.handle('config:get', () => config);
 ipcMain.handle('config:set', (_e, next) => {
   const before = config;
-  config = { ...before, ...next, thresholds: { ...before.thresholds, ...(next.thresholds || {}) } };
+  config = { ...before, ...next,
+    thresholds: { ...before.thresholds, ...(next.thresholds || {}) },
+    alerts: { ...before.alerts, ...(next.alerts || {}) } };
+  alerts.reset();
+  if (activeAlert && activeAlert.type !== 'test') applyAlert(null);
   store.save(config);
   statusCache = null;
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!config.openAtLogin });
@@ -267,6 +301,8 @@ ipcMain.on('overlay:menu', () => {
   if (overlayWin) buildMenu().popup({ window: overlayWin });
 });
 ipcMain.on('overlay:open-settings', openSettings);
+ipcMain.on('overlay:ack', acknowledgeAlert);
+ipcMain.on('alert:test', () => applyAlert({ type: 'test', message: 'Test alert', sound: 'warn', volume: Number(config.alerts.volume) }));
 ipcMain.on('settings:close', () => { if (settingsWin) settingsWin.close(); });
 ipcMain.on('open-external', (_e, url) => { if (/^https?:\/\//i.test(url)) shell.openExternal(url); });
 

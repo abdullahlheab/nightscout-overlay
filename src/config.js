@@ -18,7 +18,8 @@ const DEFAULTS = {
   clickThrough: false,
   openAtLogin: false,
   position: null,         // { x, y } or null = top-right of primary display
-  thresholds: { bgLow: null, bgTargetBottom: null, bgTargetTop: null, bgHigh: null } // null = use Nightscout's
+  thresholds: { bgLow: null, bgTargetBottom: null, bgTargetTop: null, bgHigh: null }, // null = use Nightscout's
+  alerts: { enabled: true, low: true, high: true, urgent: true, stale: true, volume: 0.3, repeatMinutes: 10, snoozeMinutes: 30 }
 };
 
 function file() {
@@ -29,9 +30,11 @@ function load() {
   try {
     // strip a BOM in case the file was hand-edited with an editor that adds one
     const raw = JSON.parse(fs.readFileSync(file(), 'utf8').replace(/^﻿/, ''));
-    return { ...DEFAULTS, ...raw, thresholds: { ...DEFAULTS.thresholds, ...(raw.thresholds || {}) } };
+    return { ...DEFAULTS, ...raw,
+      thresholds: { ...DEFAULTS.thresholds, ...(raw.thresholds || {}) },
+      alerts: { ...DEFAULTS.alerts, ...(raw.alerts || {}) } };
   } catch {
-    return { ...DEFAULTS, thresholds: { ...DEFAULTS.thresholds } };
+    return { ...DEFAULTS, thresholds: { ...DEFAULTS.thresholds }, alerts: { ...DEFAULTS.alerts } };
   }
 }
 
