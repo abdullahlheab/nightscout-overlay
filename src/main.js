@@ -162,7 +162,9 @@ function decorate(alert) {
 function applyAlert(alert) {
   alert = decorate(alert);
   const wasActive = !!activeAlert;
-  activeAlert = alert;
+  // The sound flag is one-shot: it goes to the page exactly once. What we keep (and re-send on
+  // resize, config changes and polls) has it cleared, otherwise the chime replays. Fixes #1.
+  activeAlert = alert ? { ...alert, sound: null } : null;
   if (wasActive !== !!alert) { resizeOverlay(); applyClickThrough(); }
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:alert', alert);
   if (alert && alert.sound && (hidden || config.alerts.notify) && Notification.isSupported()) {
@@ -275,8 +277,8 @@ ipcMain.handle('config:set', (_e, next) => {
   config = { ...before, ...next,
     thresholds: { ...before.thresholds, ...(next.thresholds || {}) },
     alerts: { ...before.alerts, ...(next.alerts || {}) } };
-  alerts.reset();
-  if (activeAlert && activeAlert.type !== 'test') applyAlert(null);
+  // Do not reset the alert engine here: the next poll re-evaluates with the new settings, so a
+  // condition that is still active keeps its bar without re-chiming, and a disabled one clears.
   store.save(config);
   statusCache = null;
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!config.openAtLogin });
