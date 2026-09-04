@@ -120,6 +120,9 @@
   });
   grip.addEventListener('pointermove', (e) => {
     if (!drag) return;
+    // If the button is no longer held (pointerup was lost while the window resized under the
+    // cursor), stop dragging instead of re-applying a stale size on every hover.
+    if (!(e.buttons & 1)) { drag = null; return; }
     // scale by whichever axis the user stretched more
     const fx = (drag.w + (e.screenX - drag.x)) / drag.w;
     const fy = (drag.h + (e.screenY - drag.y)) / drag.h;
@@ -129,6 +132,8 @@
   const endDrag = (e) => { if (drag) { drag = null; try { grip.releasePointerCapture(e.pointerId); } catch {} } };
   grip.addEventListener('pointerup', endDrag);
   grip.addEventListener('pointercancel', endDrag);
+  grip.addEventListener('lostpointercapture', endDrag);
+  window.addEventListener('blur', endDrag);
   grip.addEventListener('click', (e) => e.stopPropagation());
 
   window.addEventListener('wheel', (e) => {
