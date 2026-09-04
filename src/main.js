@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, globalShortcut, screen, shell, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, globalShortcut, screen, shell, Notification, dialog } = require('electron');
 const path = require('path');
 const store = require('./config');
 const ns = require('./nightscout');
@@ -152,12 +152,20 @@ async function poll() {
 }
 
 // ---------- alerts ----------
+// Attach how the chime should sound (style, custom file, volume) so the renderer needs no config.
+function decorate(alert) {
+  if (!alert) return null;
+  const a = config.alerts || {};
+  return { ...alert, style: a.sound || 'chime', file: a.sound === 'custom' ? (a.customSound || '') : '', volume: Number(a.volume) };
+}
+
 function applyAlert(alert) {
+  alert = decorate(alert);
   const wasActive = !!activeAlert;
   activeAlert = alert;
   if (wasActive !== !!alert) { resizeOverlay(); applyClickThrough(); }
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:alert', alert);
-  if (alert && alert.sound && hidden && Notification.isSupported()) {
+  if (alert && alert.sound && (hidden || config.alerts.notify) && Notification.isSupported()) {
     new Notification({ title: 'Nightscout Overlay', body: alert.message, silent: true }).show();
   }
 }
@@ -302,7 +310,18 @@ ipcMain.on('overlay:menu', () => {
 });
 ipcMain.on('overlay:open-settings', openSettings);
 ipcMain.on('overlay:ack', acknowledgeAlert);
-ipcMain.on('alert:test', () => applyAlert({ type: 'test', message: 'Test alert', sound: 'warn', volume: Number(config.alerts.volume) }));
+ipcMain.on('alert:test', (_e, kind) => {
+  const units = (lastPayload && lastPayload.units) || (config.units === 'mmol' ? 'mmol' : 'mg/dl');
+  applyAlert(alerts.testAlert(kind, units));
+});
+ipcMain.handle('alert:pick-sound', async () => {
+  const r = await dialog.showOpenDialog(settingsWin || undefined, {
+    title: 'Choose an alert sound',
+    filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'm4a', 'flac'] }],
+    properties: ['openFile']
+  });
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
+});
 ipcMain.on('settings:close', () => { if (settingsWin) settingsWin.close(); });
 ipcMain.on('open-external', (_e, url) => { if (/^https?:\/\//i.test(url)) shell.openExternal(url); });
 

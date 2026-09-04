@@ -40,8 +40,19 @@ function typeFor(payload, a) {
 }
 
 function messageFor(type, payload) {
-  if (type === 'stale') return 'No data for ' + payload.ageMin + ' min';
-  return LABELS[type] + '  ' + payload.display + ' ' + payload.units;
+  // short on purpose: it shares one narrow row with the I see it button; units are shown above anyway
+  if (type === 'stale') return 'No data ' + payload.ageMin + ' min';
+  return LABELS[type] + ' ' + payload.display;
+}
+
+// Quiet hours: chimes are suppressed, the bar still shows. Handles ranges that cross midnight.
+function inQuietHours(a, now) {
+  if (!a.quietEnabled) return false;
+  const toMin = (s) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); return m ? (Number(m[1]) % 24) * 60 + Number(m[2]) % 60 : null; };
+  const from = toMin(a.quietFrom), to = toMin(a.quietTo);
+  if (from === null || to === null || from === to) return false;
+  const d = new Date(now); const cur = d.getHours() * 60 + d.getMinutes();
+  return from < to ? (cur >= from && cur < to) : (cur >= from || cur < to);
 }
 
 // Returns { show: alert | null } where alert = { type, message, sound|null, volume }.
@@ -66,16 +77,18 @@ function evaluate(payload, cfg, now = Date.now()) {
   const repeatMs = Math.max(1, Number(a.repeatMinutes) || 10) * 60000;
   const base = { type, message: messageFor(type, payload), volume: Number(a.volume) };
 
+  const chime = inQuietHours(a, now) ? null : soundFor(type);
+
   if (state.active && state.active.type === type) {
     if (now - state.active.lastChime >= repeatMs) {
       state.active.lastChime = now;
-      return { show: { ...base, sound: soundFor(type) } };
+      return { show: { ...base, sound: chime } };
     }
     return { show: { ...base, sound: null } };
   }
 
   state.active = { type, since: now, lastChime: now };
-  return { show: { ...base, sound: soundFor(type) } };
+  return { show: { ...base, sound: chime } };
 }
 
 // "I see it": hide and snooze the current condition.
@@ -90,4 +103,14 @@ function acknowledge(cfg, now = Date.now()) {
 
 function reset() { state.active = null; state.snoozed = {}; }
 
-module.exports = { evaluate, acknowledge, reset, LABELS, soundFor };
+// A fake alert for the Test buttons in Settings. Looks like the real thing, ignores quiet hours.
+const SAMPLES = { 'urgent-low': 52, low: 68, high: 215, 'urgent-high': 290, stale: null };
+function testAlert(kind, units) {
+  const type = Object.prototype.hasOwnProperty.call(SAMPLES, kind) ? kind : 'low';
+  const mgdl = SAMPLES[type];
+  const shown = mgdl === null ? null : (units === 'mmol' ? (mgdl / 18.0182).toFixed(1) : String(mgdl));
+  const payload = type === 'stale' ? { ageMin: 25 } : { display: shown, units };
+  return { type: 'test', testState: type, message: messageFor(type, payload), sound: soundFor(type) };
+}
+
+module.exports = { evaluate, acknowledge, reset, testAlert, inQuietHours, LABELS, soundFor };

@@ -15,6 +15,7 @@
     deltaEl.style.display = c.showDelta ? '' : 'none';
     ageEl.style.display = c.showAge ? '' : 'none';
     document.body.classList.toggle('click-through', !!c.clickThrough);
+    card.classList.toggle('flash', !!(c.alerts && c.alerts.flash));
     if (data) render();
   }
 
@@ -45,7 +46,7 @@
       return;
     }
 
-    card.classList.add(p.state || 'error');
+    card.classList.add(testState || p.state || 'error');
     bgEl.textContent = p.display;
     arrowEl.textContent = p.arrow || '';
     deltaEl.textContent = p.deltaDisplay || '';
@@ -104,37 +105,67 @@
   // ---- alerts ----
   const alertBar = $('alertBar'), alertText = $('alertText'), ackBtn = $('ack');
   let audioCtx = null;
+  let customAudio = null;
+  let testState = null;
   const PATTERNS = {
     warn:   [[660, 0], [880, 0.22]],
     urgent: [[660, 0], [880, 0.2], [1100, 0.4], [660, 0.9], [880, 1.1], [1100, 1.3]],
     stale:  [[440, 0]]
   };
-  function chime(kind, volume) {
+  // sound style -> waveform, decay, loudness, pitch
+  const STYLES = {
+    chime: { wave: 'sine', decay: 0.35, gainMul: 0.35, freqMul: 1 },
+    bell:  { wave: 'triangle', decay: 0.9, gainMul: 0.3, freqMul: 1.5 },
+    beep:  { wave: 'square', decay: 0.12, gainMul: 0.12, freqMul: 1.25 }
+  };
+  function fileUrl(p) {
+    return 'file:///' + String(p).replace(/\\/g, '/').replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/');
+  }
+  function chime(kind, volume, style, file) {
+    const vol = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0.3));
+    if (style === 'silent' || vol <= 0) return;
+    if (style === 'custom') {
+      if (!file) return;
+      try {
+        if (customAudio) customAudio.pause();
+        customAudio = new Audio(fileUrl(file));
+        customAudio.volume = vol;
+        customAudio.play().catch(() => {});
+      } catch { /* unreadable file */ }
+      return;
+    }
+    const st = STYLES[style] || STYLES.chime;
     try {
       audioCtx = audioCtx || new AudioContext();
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      const v = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0.3)) * 0.35; // soft by design
-      if (v <= 0) return;
+      const v = vol * st.gainMul; // soft by design
       const t0 = audioCtx.currentTime + 0.05;
       for (const [freq, at] of PATTERNS[kind] || PATTERNS.warn) {
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = 'sine'; o.frequency.value = freq;
+        o.type = st.wave; o.frequency.value = freq * st.freqMul;
         g.gain.setValueAtTime(0.0001, t0 + at);
         g.gain.exponentialRampToValueAtTime(v, t0 + at + 0.03);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.35);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + st.decay);
         o.connect(g).connect(audioCtx.destination);
-        o.start(t0 + at); o.stop(t0 + at + 0.4);
+        o.start(t0 + at); o.stop(t0 + at + st.decay + 0.05);
       }
     } catch { /* no audio device */ }
   }
+  const STATE_CLASSES = ['in-range', 'low', 'high', 'urgent-low', 'urgent-high', 'stale', 'error'];
   function showAlert(a) {
-    if (!a) { alertBar.classList.add('hidden'); card.classList.remove('alerting', 'test'); return; }
+    if (!a) {
+      alertBar.classList.add('hidden'); card.classList.remove('alerting');
+      testState = null;
+      if (data) render(); else card.classList.remove(...STATE_CLASSES);
+      return;
+    }
     alertText.textContent = a.message;
     alertBar.classList.remove('hidden');
     card.classList.add('alerting');
-    card.classList.toggle('test', a.type === 'test');
-    if (a.sound) chime(a.sound, a.volume);
-    if (data) render();
+    // a test alert colours the card like the real condition would
+    testState = a.type === 'test' ? (a.testState || 'low') : null;
+    if (data) render(); else { card.classList.remove(...STATE_CLASSES); card.classList.add(testState || 'error'); }
+    if (a.sound) chime(a.sound, a.volume, a.style, a.file);
   }
   ackBtn.addEventListener('click', (e) => { e.stopPropagation(); window.api.acknowledgeAlert(); });
   window.api.onAlert(showAlert);

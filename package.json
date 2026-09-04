@@ -1,6 +1,6 @@
 {
   "name": "nightscout-overlay",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Always-on-top transparent glucose overlay that reads from your Nightscout site",
   "main": "src/main.js",
   "author": "Abdullah",

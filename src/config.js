@@ -19,7 +19,16 @@ const DEFAULTS = {
   openAtLogin: false,
   position: null,         // { x, y } or null = top-right of primary display
   thresholds: { bgLow: null, bgTargetBottom: null, bgTargetTop: null, bgHigh: null }, // null = use Nightscout's
-  alerts: { enabled: true, low: true, high: true, urgent: true, stale: true, volume: 0.3, repeatMinutes: 10, snoozeMinutes: 30 }
+  alerts: {
+    enabled: true, low: true, high: true, urgent: true, stale: true,
+    sound: 'chime',        // chime | bell | beep | custom | silent
+    customSound: '',       // path to a .wav/.mp3/.ogg when sound = custom
+    volume: 0.3,
+    repeatMinutes: 10, snoozeMinutes: 30,
+    flash: true,            // pulse the card border while alerting
+    notify: false,          // also show a Windows/macOS notification (always when overlay hidden)
+    quietEnabled: false, quietFrom: '23:00', quietTo: '07:00'   // no chime in this window, bar still shows
+  }
 };
 
 function file() {

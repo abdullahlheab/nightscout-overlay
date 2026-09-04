@@ -4,7 +4,8 @@
   const fields = ['url', 'token', 'units', 'historyHours', 'scale', 'opacity', 'showGraph', 'showDelta', 'showAge',
     'refreshSeconds', 'staleMinutes', 'clickThrough', 'openAtLogin'];
   const thresholdKeys = ['bgLow', 'bgTargetBottom', 'bgTargetTop', 'bgHigh'];
-  const alertMap = { enabled: 'alertsEnabled', low: 'alertLow', high: 'alertHigh', urgent: 'alertUrgent', stale: 'alertStale', volume: 'alertVolume', repeatMinutes: 'alertRepeat', snoozeMinutes: 'alertSnooze' };
+  const alertMap = { enabled: 'alertsEnabled', low: 'alertLow', high: 'alertHigh', urgent: 'alertUrgent', stale: 'alertStale', sound: 'alertSound', volume: 'alertVolume', repeatMinutes: 'alertRepeat', snoozeMinutes: 'alertSnooze', flash: 'alertFlash', notify: 'alertNotify', quietEnabled: 'quietEnabled', quietFrom: 'quietFrom', quietTo: 'quietTo' };
+  let customSound = '';
 
   function fill(cfg) {
     for (const f of fields) {
@@ -15,6 +16,8 @@
     for (const k of thresholdKeys) $(k).value = cfg.thresholds && cfg.thresholds[k] ? cfg.thresholds[k] : '';
     const al = cfg.alerts || {};
     for (const [k, id] of Object.entries(alertMap)) { const el = $(id); if (el.type === 'checkbox') el.checked = !!al[k]; else el.value = al[k] ?? ''; }
+    customSound = al.customSound || '';
+    updateSoundRow();
     updateRangeLabels();
   }
 
@@ -30,7 +33,11 @@
     }
     for (const k of thresholdKeys) out.thresholds[k] = $(k).value === '' ? null : num($(k).value, null);
     out.alerts = {};
-    for (const [k, id] of Object.entries(alertMap)) { const el = $(id); out.alerts[k] = el.type === 'checkbox' ? el.checked : num(el.value, undefined); }
+    for (const [k, id] of Object.entries(alertMap)) {
+      const el = $(id);
+      out.alerts[k] = el.type === 'checkbox' ? el.checked : (el.type === 'number' || el.type === 'range') ? num(el.value, undefined) : el.value;
+    }
+    out.alerts.customSound = customSound;
     if (out.url && !/^https?:\/\//i.test(out.url)) out.url = 'https://' + out.url;
     return out;
   }
@@ -43,7 +50,20 @@
   $('scale').addEventListener('input', updateRangeLabels);
   $('opacity').addEventListener('input', updateRangeLabels);
   $('alertVolume').addEventListener('input', updateRangeLabels);
-  $('testAlert').addEventListener('click', async () => { await save(); window.api.testAlert(); });
+  function updateSoundRow() {
+    const custom = $('alertSound').value === 'custom';
+    $('customSoundRow').style.display = custom ? '' : 'none';
+    $('customSoundName').textContent = customSound ? customSound.split(/[\\/]/).pop() : 'No file chosen';
+  }
+  $('alertSound').addEventListener('change', updateSoundRow);
+  $('pickSound').addEventListener('click', async () => {
+    const f = await window.api.pickSound();
+    if (f) { customSound = f; updateSoundRow(); }
+  });
+  $('clearSound').addEventListener('click', () => { customSound = ''; updateSoundRow(); });
+  for (const b of document.querySelectorAll('.testBtn')) {
+    b.addEventListener('click', async () => { await save(); window.api.testAlert(b.dataset.kind); });
+  }
 
   async function save() {
     const cfg = await window.api.setConfig(collect());

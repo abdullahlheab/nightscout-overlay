@@ -52,8 +52,10 @@ On Windows click **More info** then **Run anyway**. On macOS run
 When an alert fires, the card glows, plays a short two-note chime at low volume, and shows an **I see it**
 button. Clicking it hides the alert and snoozes that condition for 30 minutes (configurable). If it gets
 worse, for example low turns into urgent low, the alert comes back through the snooze. Back in range
-resets everything. Volume, which conditions alert, and the reminder and snooze times are in Settings,
-where a **Test alert** button lets you hear it. Alerts always take the mouse, even in click-through mode,
+resets everything. Settings lets you pick the sound (soft chime, bell, beep, your own audio file, or silent), the volume,
+which conditions alert, reminder and snooze times, quiet hours with no sound, whether the border pulses,
+and whether a system notification is shown too. A test button per condition shows and plays exactly
+what that alert will look and sound like. Alerts always take the mouse, even in click-through mode,
 so the button can be clicked.
 
 In click-through mode the mouse passes straight through the overlay. Use the shortcut or the tray

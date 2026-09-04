@@ -116,10 +116,40 @@
     </div>
     <div class="row" style="margin-top:4px">
       <div>
+        <label for="alertSound">Sound</label>
+        <select id="alertSound">
+          <option value="chime">Soft chime</option>
+          <option value="bell">Bell</option>
+          <option value="beep">Beep</option>
+          <option value="custom">My own audio file</option>
+          <option value="silent">Silent (visual only)</option>
+        </select>
+      </div>
+      <div>
         <label for="alertVolume">Volume <span class="rangeval" id="alertVolumeVal"></span></label>
         <input id="alertVolume" type="range" min="0" max="1" step="0.05">
       </div>
-      <div style="display:flex;align-items:flex-end"><button id="testAlert" type="button" style="width:100%">Test alert</button></div>
+    </div>
+    <div id="customSoundRow" class="actions" style="margin-top:8px">
+      <button id="pickSound" type="button">Choose file...</button>
+      <span id="customSoundName" class="hint" style="margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button id="clearSound" type="button">Clear</button>
+    </div>
+    <label style="margin-top:10px">Test how each one looks and sounds</label>
+    <div class="actions" style="flex-wrap:wrap;margin-top:2px">
+      <button type="button" class="testBtn" data-kind="low">Low</button>
+      <button type="button" class="testBtn" data-kind="high">High</button>
+      <button type="button" class="testBtn" data-kind="urgent-low">Urgent low</button>
+      <button type="button" class="testBtn" data-kind="urgent-high">Urgent high</button>
+      <button type="button" class="testBtn" data-kind="stale">No data</button>
+    </div>
+    <div class="hint">Tests use the current settings, including unsaved changes, and stay on the overlay until you press "I see it".</div>
+    <div class="check" style="margin-top:10px"><input id="alertFlash" type="checkbox"><label for="alertFlash">Pulse the overlay border while an alert is showing</label></div>
+    <div class="check"><input id="alertNotify" type="checkbox"><label for="alertNotify">Also show a system notification (always when the overlay is hidden)</label></div>
+    <div class="check" style="margin-top:10px"><input id="quietEnabled" type="checkbox"><label for="quietEnabled">Quiet hours: no sound, alerts still show</label></div>
+    <div class="row">
+      <div><label for="quietFrom">From</label><input id="quietFrom" type="time"></div>
+      <div><label for="quietTo">To</label><input id="quietTo" type="time"></div>
     </div>
     <div class="row">
       <div>
