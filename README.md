@@ -17,7 +17,7 @@ Grab the latest build from the [Releases](../../releases) page:
 
 | OS | File |
 |----|------|
-| Windows | `Nightscout Overlay-x.y.z-win-x64.exe` (installer) or the `portable` exe (no install) |
+| Windows | `Nightscout Overlay-Setup-x.y.z-win-x64.exe` (installer) or `Nightscout Overlay-Portable-x.y.z-win-x64.exe` (no install, just run it) |
 | macOS | `Nightscout Overlay-x.y.z-mac-*.dmg` |
 | Linux | `Nightscout Overlay-x.y.z-linux-x86_64.AppImage` |
 
@@ -65,7 +65,13 @@ npm start
 npm run dist:win     # or dist:mac / dist:linux, must run on that OS
 ```
 
-Output goes to `dist/`. Pushing a tag like `v0.2.0` runs the GitHub Actions workflow in
+Output goes to `dist/`.
+
+On Windows, electron-builder needs permission to create symlinks while unpacking its code-signing helper,
+so either turn on **Developer Mode** (Settings -> System -> For developers) or run the build from an
+administrator terminal once. After that first run the cache is in place and a normal terminal works.
+
+Pushing a tag like `v0.2.0` runs the GitHub Actions workflow in
 `.github/workflows/release.yml`, which builds all three platforms and attaches them to a GitHub Release.
 
 ## How it works
