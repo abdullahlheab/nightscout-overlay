@@ -1,0 +1,89 @@
+# Nightscout Overlay
+
+A tiny transparent glucose readout that floats above every other window, including games and
+fullscreen apps. It reads from **your own Nightscout site** and shows the current value, trend
+arrow, change since the last reading, how old the reading is, and a mini graph of the last few hours.
+
+- Always on top, frameless, transparent. Drag it anywhere. Position is remembered.
+- Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
+- Click-through mode so it never gets in the way of what is underneath.
+- mg/dL or mmol/L, either from your site or forced.
+- Runs in the system tray. Nothing else. No accounts, no telemetry, no server in the middle.
+- Windows, macOS and Linux.
+
+## Install
+
+Grab the latest build from the [Releases](../../releases) page:
+
+| OS | File |
+|----|------|
+| Windows | `Nightscout Overlay-x.y.z-win-x64.exe` (installer) or the `portable` exe (no install) |
+| macOS | `Nightscout Overlay-x.y.z-mac-*.dmg` |
+| Linux | `Nightscout Overlay-x.y.z-linux-x86_64.AppImage` |
+
+The builds are not code-signed, so Windows SmartScreen and macOS Gatekeeper will complain the first time.
+On Windows click **More info** then **Run anyway**. On macOS run
+`xattr -dr com.apple.quarantine "/Applications/Nightscout Overlay.app"` once, or right-click the app and choose Open.
+
+## Set up
+
+1. Start the app. The settings window opens on first run.
+2. Enter your Nightscout URL, for example `https://mysite.example.com`.
+3. If your site needs a login to read data, add an access token:
+   Nightscout menu (hamburger) -> **Admin tools** -> **Add new subject**, give it the role `readable`,
+   save, then copy the token that looks like `viewer-abc123...`. Paste it into the token field.
+   If your site is readable without logging in, leave it blank.
+4. Click **Test connection**, then **Save & close**.
+
+## Using it
+
+| Action | How |
+|--------|-----|
+| Move | drag the overlay |
+| Menu | right-click the overlay, click the `...` that appears on hover, or right-click the tray icon |
+| Click-through on/off | `Ctrl+Alt+G` (`Cmd+Alt+G` on Mac) |
+| Hide / show | `Ctrl+Alt+H`, or left-click the tray icon |
+| Settings | `Ctrl+Alt+S` |
+| Quit | tray menu -> Quit |
+
+In click-through mode the mouse passes straight through the overlay. Use the shortcut or the tray
+menu to turn it off again.
+
+Settings live in a plain JSON file. The path is shown at the bottom of the settings window.
+
+## Run from source
+
+```bash
+npm install
+npm run icons   # regenerates assets/*.png, only needed if you change the icon script
+npm start
+```
+
+## Build installers
+
+```bash
+npm run dist:win     # or dist:mac / dist:linux, must run on that OS
+```
+
+Output goes to `dist/`. Pushing a tag like `v0.2.0` runs the GitHub Actions workflow in
+`.github/workflows/release.yml`, which builds all three platforms and attaches them to a GitHub Release.
+
+## How it works
+
+Electron app. The main process polls `GET /api/v1/entries/sgv.json` on your site
+(plus `/api/v1/status.json` once, for units and thresholds) and pushes a small payload to a
+transparent, always-on-top `BrowserWindow`. Your token is only ever sent to the URL you entered.
+
+- `src/main.js` window, tray, shortcuts, polling, IPC
+- `src/nightscout.js` API client and the pure `buildPayload()` that turns entries into what is displayed
+- `src/renderer/overlay.*` the overlay itself
+- `src/renderer/settings.*` the settings window
+
+## Disclaimer
+
+This is a convenience display, not a medical device. Do not make treatment decisions from it.
+Always confirm with your CGM app or meter.
+
+## License
+
+MIT
