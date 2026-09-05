@@ -42,7 +42,7 @@ On Windows click **More info** then **Run anyway**. On macOS run
 | Action | How |
 |--------|-----|
 | Move | drag the overlay |
-| Resize | drag the bottom-right corner, `Ctrl+scroll` over it, or the Size slider in settings |
+| Resize | drag the bottom-right corner, `Ctrl+scroll` over it, or the Size slider in settings. It can grow until it fills the monitor it is on |
 | Menu | right-click the overlay, click the `...` that appears on hover, or right-click the tray icon |
 | Click-through on/off | `Ctrl+Alt+G` (`Cmd+Alt+G` on Mac) |
 | Hide / show | `Ctrl+Alt+H`, or left-click the tray icon |

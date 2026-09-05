@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('api', {
   setConfig: (c) => ipcRenderer.invoke('config:set', c),
   testConnection: (draft) => ipcRenderer.invoke('config:test', draft),
   configPath: () => ipcRenderer.invoke('config:path'),
+  maxScale: () => ipcRenderer.invoke('overlay:max-scale'),
+  onScale: (cb) => ipcRenderer.on('config:scale', (_e, s) => cb(s)),
   closeSettings: () => ipcRenderer.send('settings:close'),
   openExternal: (url) => ipcRenderer.send('open-external', url),
   // updates

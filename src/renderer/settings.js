@@ -48,6 +48,7 @@
     $('alertVolumeVal').textContent = Math.round(Number($('alertVolume').value) * 100) + '%';
   }
   $('scale').addEventListener('input', updateRangeLabels);
+  window.api.onScale((s) => { $('scale').value = String(s); updateRangeLabels(); });
   $('opacity').addEventListener('input', updateRangeLabels);
   $('alertVolume').addEventListener('input', updateRangeLabels);
   function updateSoundRow() {
@@ -121,6 +122,12 @@
   window.api.onUpdateState(renderUpdate);
   renderUpdate(await window.api.updateState());
 
+  // The size slider stops where the overlay would run off the monitor it is on.
+  try {
+    const mx = Math.floor((await window.api.maxScale()) * 10) / 10;
+    $('scale').max = String(mx);
+    $('scaleHint').textContent = 'Up to ' + mx.toFixed(1) + 'x fits the screen the overlay is on.';
+  } catch { /* keep the default range */ }
   fill(await window.api.getConfig());
   $('path').textContent = 'Settings file: ' + (await window.api.configPath());
 })();

@@ -85,8 +85,9 @@
     const x = (t) => ((t - tStart) / (tEnd - tStart)) * (W - 4) + 2;
 
     const accent = getComputedStyle(card).getPropertyValue('--accent').trim() || '#22c55e';
+    const s = Math.max(1, Number(cfg.scale) || 1);
     ctx.strokeStyle = accent;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5 * s;
     ctx.lineJoin = 'round';
     ctx.beginPath();
     history.forEach((h, i) => {
@@ -98,7 +99,7 @@
     const last = history[history.length - 1];
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(x(last.t), y(last.sgv), 2.2, 0, Math.PI * 2);
+    ctx.arc(x(last.t), y(last.sgv), 2.2 * s, 0, Math.PI * 2);
     ctx.fill();
   }
 

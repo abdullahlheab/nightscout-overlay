@@ -27,11 +27,35 @@ const ASSETS = path.join(__dirname, '..', 'assets');
 const PRELOAD = path.join(__dirname, 'preload.js');
 
 // ---------- sizing ----------
-function overlaySize() {
+const BASE_W = 170;
+const MIN_SCALE = 0.5;
+
+function baseHeight() {
+  return 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
+}
+
+function currentWorkArea() {
+  const d = overlayWin && !overlayWin.isDestroyed()
+    ? screen.getDisplayMatching(overlayWin.getBounds())
+    : screen.getPrimaryDisplay();
+  return d.workArea;
+}
+
+// Largest scale that still fits the monitor the overlay is on, for what is currently shown.
+function maxScale() {
+  const wa = currentWorkArea();
+  return Math.max(MIN_SCALE, Math.min(wa.width / BASE_W, wa.height / baseHeight()));
+}
+
+// The configured scale, reduced only if a bar appeared that would push the card off the screen.
+function effectiveScale() {
   const s = Number(config.scale) || 1;
-  const w = 170;
-  const h = 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
-  return { width: Math.round(w * s), height: Math.round(h * s) };
+  return Math.max(MIN_SCALE, Math.min(s, maxScale()));
+}
+
+function overlaySize() {
+  const s = effectiveScale();
+  return { width: Math.round(BASE_W * s), height: Math.round(baseHeight() * s) };
 }
 
 function defaultPosition() {
@@ -117,7 +141,8 @@ function pushToOverlay() {
 
 function publicConfig() {
   const { token, ...rest } = config;
-  return { ...rest, hasToken: !!token };
+  // the page sizes its text from `scale`, so send the size actually in use
+  return { ...rest, hasToken: !!token, scale: effectiveScale(), configuredScale: config.scale, maxScale: maxScale() };
 }
 
 function resizeOverlay() {
@@ -127,6 +152,8 @@ function resizeOverlay() {
   const p = clampToScreen({ x, y });
   overlayWin.setMinimumSize(1, 1);
   overlayWin.setBounds({ x: p.x, y: p.y, width, height });
+  // the page sizes its text from the effective scale, which may just have changed
+  overlayWin.webContents.send('overlay:config', publicConfig());
 }
 
 // ---------- polling ----------
@@ -322,17 +349,20 @@ ipcMain.handle('config:test', async (_e, draft) => {
   catch (e) { return { ok: false, error: e.message || String(e) }; }
 });
 ipcMain.handle('config:path', () => store.file());
+ipcMain.handle('overlay:max-scale', () => maxScale());
 ipcMain.handle('update:state', () => ({ ...updater.get(), text: updater.describe() }));
 ipcMain.on('update:check', () => updater.check());
 ipcMain.on('update:install', () => updater.install());
 ipcMain.on('update:open', () => updater.openDownloadPage());
 let scaleSaveTimer = null;
 ipcMain.on('overlay:set-scale', (_e, scale) => {
-  const s = Math.min(3, Math.max(0.5, Number(scale) || 1));
+  const s = Math.min(maxScale(), Math.max(MIN_SCALE, Number(scale) || 1));
   if (Math.abs(s - config.scale) < 0.001) return;
   config.scale = Math.round(s * 100) / 100;
   resizeOverlay();
   pushToOverlay();
+  // keep an open Settings window in step so a later Save does not undo the resize
+  if (settingsWin && !settingsWin.isDestroyed()) settingsWin.webContents.send('config:scale', config.scale);
   clearTimeout(scaleSaveTimer);
   scaleSaveTimer = setTimeout(() => store.save(config), 400);
 });
@@ -383,12 +413,7 @@ if (!app.requestSingleInstanceLock()) {
 
     if (!config.url) openSettings();
 
-    screen.on('display-metrics-changed', () => {
-      if (!overlayWin) return;
-      const [x, y] = overlayWin.getPosition();
-      const p = clampToScreen({ x, y });
-      overlayWin.setPosition(p.x, p.y);
-    });
+    screen.on('display-metrics-changed', () => { resizeOverlay(); pushToOverlay(); });
   });
 
   // Keep running in the tray when windows close.
