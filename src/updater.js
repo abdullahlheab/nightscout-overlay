@@ -38,6 +38,10 @@ function notify(title, body, onClick) {
 function init() {
   if (!app.isPackaged || !autoUpdater) {
     set({ status: 'disabled' });
+    // Dev only: NS_OVERLAY_FAKE_UPDATE=1.2.3 pretends that version is downloaded, to test the UI.
+    if (!app.isPackaged && process.env.NS_OVERLAY_FAKE_UPDATE) {
+      setTimeout(() => set({ status: 'ready', latest: process.env.NS_OVERLAY_FAKE_UPDATE, percent: 100 }), 3000);
+    }
     return;
   }
   autoUpdater.autoDownload = !state.portable;

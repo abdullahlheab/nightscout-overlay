@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   setScale: (s) => ipcRenderer.send('overlay:set-scale', s),
   onAlert: (cb) => ipcRenderer.on('overlay:alert', (_e, a) => cb(a)),
   acknowledgeAlert: () => ipcRenderer.send('overlay:ack'),
+  onUpdateNotice: (cb) => ipcRenderer.on('overlay:update-notice', (_e, n) => cb(n)),
+  dismissUpdate: () => ipcRenderer.send('update:dismiss'),
   testAlert: (kind) => ipcRenderer.send('alert:test', kind),
   pickSound: () => ipcRenderer.invoke('alert:pick-sound'),
   // settings window

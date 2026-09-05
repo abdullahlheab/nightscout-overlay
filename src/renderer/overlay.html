@@ -91,6 +91,21 @@
     border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: var(--fg);
   }
   #ack:hover { background: rgba(255,255,255,0.22); }
+  #updateBar {
+    flex: none; display: flex; align-items: center; gap: 0.35rem;
+    margin-top: 0.3rem; height: 1.5rem;
+  }
+  #updateBar.hidden { display: none; }
+  #updateText { flex: 1; font-size: 0.68rem; font-weight: 600; color: #93c5fd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #updateBar button {
+    -webkit-app-region: no-drag; cursor: pointer;
+    font: inherit; font-size: 0.64rem; font-weight: 600; line-height: 1;
+    padding: 0.3rem 0.5rem; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: var(--fg);
+  }
+  #updateBar button:hover { background: rgba(255,255,255,0.22); }
+  #updateGo { background: #2563eb; border-color: #2563eb; }
+  #updateGo:hover { background: #1d4ed8; }
   #card.alerting { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent), 0 4px 16px rgba(0,0,0,0.35); }
   #card.alerting.stale { --accent: #60a5fa; }
   #card.alerting.flash { animation: flash 1.2s ease-in-out infinite; }
@@ -113,6 +128,7 @@
     <div id="err"></div>
     <canvas id="graph"></canvas>
     <div id="alertBar" class="hidden"><span id="alertText"></span><button id="ack" type="button" title="Dismiss and snooze this alert">I see it</button></div>
+    <div id="updateBar" class="hidden"><span id="updateText"></span><button id="updateGo" type="button">Update</button><button id="updateLater" type="button" title="Hide for a week">Later</button></div>
     <div id="menu" title="Menu">&#8943;</div>
     <div id="grip" title="Drag to resize (or Ctrl+scroll)"></div>
   </div>

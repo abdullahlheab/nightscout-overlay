@@ -170,6 +170,24 @@
   ackBtn.addEventListener('click', (e) => { e.stopPropagation(); window.api.acknowledgeAlert(); });
   window.api.onAlert(showAlert);
 
+  // ---- update notice ----
+  const updateBar = $('updateBar'), updateText = $('updateText'), updateGo = $('updateGo');
+  let notice = null;
+  window.api.onUpdateNotice((n) => {
+    notice = n;
+    if (!n) { updateBar.classList.add('hidden'); return; }
+    updateText.textContent = 'v' + n.version;   // short: it shares the row with two buttons
+    updateGo.textContent = n.ready ? 'Update' : 'Download';
+    updateBar.classList.remove('hidden');
+    if (data) render();
+  });
+  updateGo.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!notice) return;
+    if (notice.ready) window.api.installUpdate(); else window.api.openDownloadPage();
+  });
+  $('updateLater').addEventListener('click', (e) => { e.stopPropagation(); window.api.dismissUpdate(); });
+
   window.api.onConfig(applyConfig);
   window.api.onData((p) => { data = p; render(); });
 

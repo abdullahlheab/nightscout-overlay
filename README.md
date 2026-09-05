@@ -90,9 +90,16 @@ Pushing a tag like `v0.2.0` runs the GitHub Actions workflow in
 ## Publishing an update
 
 Every installed copy checks GitHub Releases about 15 seconds after launch and every 6 hours after that.
-When a newer version exists it is downloaded in the background and installed the next time the app is
-restarted or quit; the tray menu and the Settings window show progress and offer "Restart to update".
-Portable builds cannot replace their own exe, so they show a notification linking to the download instead.
+When a newer version exists it is downloaded in the background. Once it is ready a small bar appears
+on the overlay with **Update** and **Later**. Update restarts into the new version right away; Later
+hides the bar for a week (it comes back sooner if an even newer version appears). If you never press
+anything, the update installs the next time you quit. The tray menu and the Settings window show the
+same status. Portable builds cannot replace their own exe, so their bar offers **Download** instead.
+
+The update is an in-place upgrade: the new installer runs silently over the existing install, so the
+app keeps its folder, shortcuts, Start menu entry and all settings, and Windows still lists a single
+"Nightscout Overlay". Nothing from the previous version is left behind. Installs under Program Files
+ask for administrator approval at that moment.
 
 To ship a new version:
 

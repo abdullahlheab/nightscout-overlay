@@ -21,6 +21,7 @@ let statusCache = null;
 let lastPayload = null;
 let hidden = false;
 let activeAlert = null;
+let updateNotice = null;   // { version, ready } shown as a bar in the overlay
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -29,7 +30,7 @@ const PRELOAD = path.join(__dirname, 'preload.js');
 function overlaySize() {
   const s = Number(config.scale) || 1;
   const w = 170;
-  const h = 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0);
+  const h = 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
   return { width: Math.round(w * s), height: Math.round(h * s) };
 }
 
@@ -101,8 +102,8 @@ function createOverlay() {
 
 function applyClickThrough() {
   if (!overlayWin) return;
-  // An active alert always takes the mouse so the "I see it" button can be clicked.
-  overlayWin.setIgnoreMouseEvents(!!config.clickThrough && !activeAlert, { forward: true });
+  // An active alert or update notice always takes the mouse so its buttons can be clicked.
+  overlayWin.setIgnoreMouseEvents(!!config.clickThrough && !activeAlert && !updateNotice, { forward: true });
   updateTray();
 }
 
@@ -111,6 +112,7 @@ function pushToOverlay() {
   overlayWin.webContents.send('overlay:config', publicConfig());
   if (lastPayload) overlayWin.webContents.send('overlay:data', lastPayload);
   overlayWin.webContents.send('overlay:alert', activeAlert);
+  overlayWin.webContents.send('overlay:update-notice', updateNotice);
 }
 
 function publicConfig() {
@@ -170,6 +172,33 @@ function applyAlert(alert) {
   if (alert && alert.sound && (hidden || config.alerts.notify) && Notification.isSupported()) {
     new Notification({ title: 'Nightscout Overlay', body: alert.message, silent: true }).show();
   }
+}
+
+// ---------- in-overlay update notice ----------
+const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function computeUpdateNotice() {
+  const u = updater.get();
+  if (u.status !== 'ready' && u.status !== 'available') return null;
+  const d = config.updateDismissed;
+  if (d && d.version === u.latest && Date.now() < d.until) return null;
+  return { version: u.latest, ready: u.status === 'ready' };
+}
+
+function refreshUpdateNotice() {
+  const next = computeUpdateNotice();
+  const changed = JSON.stringify(next) !== JSON.stringify(updateNotice);
+  updateNotice = next;
+  if (changed) { resizeOverlay(); applyClickThrough(); }
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:update-notice', updateNotice);
+}
+
+// "Later": hide the notice for a week, or until a newer version shows up.
+function dismissUpdateNotice() {
+  if (!updateNotice) return;
+  config.updateDismissed = { version: updateNotice.version, until: Date.now() + DISMISS_MS };
+  store.save(config);
+  refreshUpdateNotice();
 }
 
 function acknowledgeAlert() {
@@ -312,6 +341,7 @@ ipcMain.on('overlay:menu', () => {
 });
 ipcMain.on('overlay:open-settings', openSettings);
 ipcMain.on('overlay:ack', acknowledgeAlert);
+ipcMain.on('update:dismiss', dismissUpdateNotice);
 ipcMain.on('alert:test', (_e, kind) => {
   const units = (lastPayload && lastPayload.units) || (config.units === 'mmol' ? 'mmol' : 'mg/dl');
   applyAlert(alerts.testAlert(kind, units));
@@ -341,12 +371,15 @@ if (!app.requestSingleInstanceLock()) {
     updater.init();
     updater.onChange((u) => {
       updateTray();
+      refreshUpdateNotice();
       if (settingsWin && !settingsWin.isDestroyed()) settingsWin.webContents.send('update:state', { ...u, text: updater.describe(u) });
     });
 
     globalShortcut.register('CommandOrControl+Alt+G', toggleClickThrough);
     globalShortcut.register('CommandOrControl+Alt+H', toggleHidden);
     globalShortcut.register('CommandOrControl+Alt+S', openSettings);
+
+    setInterval(refreshUpdateNotice, 60 * 60 * 1000); // brings a dismissed notice back after a week
 
     if (!config.url) openSettings();
 

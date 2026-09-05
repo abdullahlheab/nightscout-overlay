@@ -18,6 +18,7 @@ const DEFAULTS = {
   clickThrough: false,
   openAtLogin: false,
   position: null,         // { x, y } or null = top-right of primary display
+  updateDismissed: null,  // { version, until } after "Later" on the in-overlay update notice
   thresholds: { bgLow: null, bgTargetBottom: null, bgTargetTop: null, bgHigh: null }, // null = use Nightscout's
   alerts: {
     enabled: true, low: true, high: true, urgent: true, stale: true,
