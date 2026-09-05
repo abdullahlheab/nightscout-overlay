@@ -24,7 +24,7 @@ const DEFAULTS = {
     sound: 'chime',        // chime | bell | beep | custom | silent
     customSound: '',       // path to a .wav/.mp3/.ogg when sound = custom
     volume: 0.3,
-    repeatMinutes: 10, snoozeMinutes: 30,
+    remindMinutes: 30,      // replay once every N minutes while still out of range
     flash: true,            // pulse the card border while alerting
     notify: false,          // also show a Windows/macOS notification (always when overlay hidden)
     quietEnabled: false, quietFrom: '23:00', quietTo: '07:00'   // no chime in this window, bar still shows
@@ -39,9 +39,13 @@ function load() {
   try {
     // strip a BOM in case the file was hand-edited with an editor that adds one
     const raw = JSON.parse(fs.readFileSync(file(), 'utf8').replace(/^﻿/, ''));
+    const alerts = { ...DEFAULTS.alerts, ...(raw.alerts || {}) };
+    // 0.2.3 merged the old repeat/snooze pair into one interval
+    if (raw.alerts && raw.alerts.remindMinutes === undefined && raw.alerts.snoozeMinutes) alerts.remindMinutes = raw.alerts.snoozeMinutes;
+    delete alerts.repeatMinutes; delete alerts.snoozeMinutes;
     return { ...DEFAULTS, ...raw,
       thresholds: { ...DEFAULTS.thresholds, ...(raw.thresholds || {}) },
-      alerts: { ...DEFAULTS.alerts, ...(raw.alerts || {}) } };
+      alerts };
   } catch {
     return { ...DEFAULTS, thresholds: { ...DEFAULTS.thresholds }, alerts: { ...DEFAULTS.alerts } };
   }

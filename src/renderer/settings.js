@@ -4,7 +4,7 @@
   const fields = ['url', 'token', 'units', 'historyHours', 'scale', 'opacity', 'showGraph', 'showDelta', 'showAge',
     'refreshSeconds', 'staleMinutes', 'clickThrough', 'openAtLogin'];
   const thresholdKeys = ['bgLow', 'bgTargetBottom', 'bgTargetTop', 'bgHigh'];
-  const alertMap = { enabled: 'alertsEnabled', low: 'alertLow', high: 'alertHigh', urgent: 'alertUrgent', stale: 'alertStale', sound: 'alertSound', volume: 'alertVolume', repeatMinutes: 'alertRepeat', snoozeMinutes: 'alertSnooze', flash: 'alertFlash', notify: 'alertNotify', quietEnabled: 'quietEnabled', quietFrom: 'quietFrom', quietTo: 'quietTo' };
+  const alertMap = { enabled: 'alertsEnabled', low: 'alertLow', high: 'alertHigh', urgent: 'alertUrgent', stale: 'alertStale', sound: 'alertSound', volume: 'alertVolume', remindMinutes: 'alertRemind', flash: 'alertFlash', notify: 'alertNotify', quietEnabled: 'quietEnabled', quietFrom: 'quietFrom', quietTo: 'quietTo' };
   let customSound = '';
 
   function fill(cfg) {

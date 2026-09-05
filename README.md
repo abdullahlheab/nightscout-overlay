@@ -6,7 +6,7 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
-- Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Reminds you every 10 minutes until you dismiss it, then stays quiet for 30 minutes unless things get worse.
+- Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Replays once every 30 minutes for as long as the reading stays out of range, and comes through straight away if things get worse.
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
 - Runs in the system tray. Nothing else. No accounts, no telemetry, no server in the middle.
@@ -50,10 +50,11 @@ On Windows click **More info** then **Run anyway**. On macOS run
 | Quit | tray menu -> Quit |
 
 When an alert fires, the card glows, plays a short two-note chime at low volume, and shows an **I see it**
-button. Clicking it hides the alert and snoozes that condition for 30 minutes (configurable). If it gets
-worse, for example low turns into urgent low, the alert comes back through the snooze. Back in range
-resets everything. Settings lets you pick the sound (soft chime, bell, beep, your own audio file, or silent), the volume,
-which conditions alert, reminder and snooze times, quiet hours with no sound, whether the border pulses,
+button. Clicking it hides the bar. While the reading stays out of range the alert replays once every
+30 minutes (configurable), whether you dismissed it or not: dismissed, the bar comes back with a chime;
+not dismissed, the bar stays and the chime repeats. If it gets worse, for example low turns into urgent
+low, the alert comes through straight away. Back in range resets everything. Settings lets you pick the sound (soft chime, bell, beep, your own audio file, or silent), the volume,
+which conditions alert, the replay interval, quiet hours with no sound, whether the border pulses,
 and whether a system notification is shown too. A test button per condition shows and plays exactly
 what that alert will look and sound like. Alerts always take the mouse, even in click-through mode,
 so the button can be clicked.

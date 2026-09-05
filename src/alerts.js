@@ -3,9 +3,10 @@
 //
 // Rules:
 //  - A new condition (low, high, urgent low/high, stale data) shows the alert bar and chimes once.
-//  - While it stays un-acknowledged it re-chimes every `repeatMinutes` (bar stays visible).
-//  - "I see it" hides the bar and snoozes that condition for `snoozeMinutes`.
-//    Escalation (low -> urgent low) is a different condition, so it alerts through a snooze.
+//  - While the reading stays out of range it replays once every `remindMinutes` (default 30):
+//      not dismissed -> the bar stays and the chime repeats on that interval;
+//      dismissed with "I see it" -> the bar hides and comes back, with a chime, on that interval.
+//    Escalation (low -> urgent low) is a different condition, so it alerts straight away.
 //  - When the reading is back in range everything resets.
 
 const LABELS = {
@@ -74,7 +75,7 @@ function evaluate(payload, cfg, now = Date.now()) {
     return { show: null };
   }
 
-  const repeatMs = Math.max(1, Number(a.repeatMinutes) || 10) * 60000;
+  const repeatMs = remindMs(a);
   const base = { type, message: messageFor(type, payload), volume: Number(a.volume) };
 
   const chime = inQuietHours(a, now) ? null : soundFor(type);
@@ -91,13 +92,14 @@ function evaluate(payload, cfg, now = Date.now()) {
   return { show: { ...base, sound: chime } };
 }
 
-// "I see it": hide and snooze the current condition.
+function remindMs(a) {
+  return Math.max(1, Number(a.remindMinutes) || 30) * 60000;
+}
+
+// "I see it": hide the current condition; it comes back after remindMinutes if still present.
 function acknowledge(cfg, now = Date.now()) {
   const a = cfg.alerts || {};
-  if (state.active) {
-    const snoozeMs = Math.max(1, Number(a.snoozeMinutes) || 30) * 60000;
-    state.snoozed[state.active.type] = now + snoozeMs;
-  }
+  if (state.active) state.snoozed[state.active.type] = now + remindMs(a);
   state.active = null;
 }
 

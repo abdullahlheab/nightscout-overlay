@@ -153,15 +153,11 @@
     </div>
     <div class="row">
       <div>
-        <label for="alertRepeat">Remind again every (minutes)</label>
-        <input id="alertRepeat" type="number" min="1" max="120" step="1">
-      </div>
-      <div>
-        <label for="alertSnooze">"I see it" snoozes for (minutes)</label>
-        <input id="alertSnooze" type="number" min="5" max="480" step="5">
+        <label for="alertRemind">Replay every (minutes) while still out of range</label>
+        <input id="alertRemind" type="number" min="1" max="480" step="1">
       </div>
     </div>
-    <div class="hint">Alerts use the ranges above. An alert that gets worse (low to urgent low) comes through even while snoozed. Back in range clears everything.</div>
+    <div class="hint">Alerts use the ranges above. An alert replays on this interval until the reading is back in range, whether or not you pressed "I see it" (that only hides the bar until the next replay). An alert that gets worse (low to urgent low) comes through straight away.</div>
   </fieldset>
 
   <fieldset>
