@@ -2,10 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
-const os = require('os');
-
-// Windows 11 (build 22000+) can do acrylic glass, which reads well over anything; elsewhere use the dark card.
-const isWin11 = process.platform === 'win32' && Number((os.release().split('.')[2]) || 0) >= 22000;
 
 const DEFAULTS = {
   url: '',
@@ -19,7 +15,7 @@ const DEFAULTS = {
   showAge: true,
   scale: 1,
   opacity: 0.92,
-  theme: isWin11 ? 'glass' : 'dark',  // dark | light | glass (Windows 11 acrylic) | none (text only)
+  theme: 'dark',          // dark | light | glass (Windows 11 acrylic, fixed blur, square corners) | none (text only)
   outline: 'auto',        // auto (on when opacity < 0.7) | on | off: halo around text and graph
   clickThrough: false,
   openAtLogin: false,
@@ -58,6 +54,8 @@ function load() {
     if (raw.alerts && raw.alerts.remindMinutes === undefined && raw.alerts.snoozeMinutes) alerts.remindMinutes = raw.alerts.snoozeMinutes;
     delete alerts.repeatMinutes; delete alerts.snoozeMinutes;
     const rank = { ...DEFAULTS.rank, ...(raw.rank || {}) }; delete rank.cutoffs;
+    // 0.4.0-0.4.2 defaulted Windows 11 to glass; it cannot be made see-through, so move those back to the dark card once
+    if (raw.theme === 'glass' && !raw.glassMigrated) { raw.theme = 'dark'; raw.glassMigrated = true; }
     return { ...DEFAULTS, ...raw,
       thresholds: { ...DEFAULTS.thresholds, ...(raw.thresholds || {}) },
       alerts, rank };

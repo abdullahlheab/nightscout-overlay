@@ -87,7 +87,7 @@ function createOverlay() {
     width, height, x: pos.x, y: pos.y,
     // Windows enforces a ~136px minimum on windows with no explicit minimum, which blocked shrinking
     minWidth: 1, minHeight: 1,
-    thickFrame: false,
+    thickFrame: false,      // a thick frame stops a transparent window from rendering on Windows
     transparent: true,
     frame: false,
     resizable: false,

@@ -7,7 +7,7 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
 - A Rocket League style **rank** for your control over the last 3 days: Bronze I up to Supersonic Legend, all 22 ranks, with the game's rank icons. Time in range decides the rank; the ladder is yours to tune, and you can drop in your own icons.
-- Four looks: frosted glass (Windows 11 acrylic, the default there), dark card, light card, or text only. A soft outline keeps the text readable on any background when the card is see-through.
+- Four looks: dark card (default), light card, text only, or frosted glass on Windows 11. A soft outline keeps the text readable on any background when the card is see-through.
 - Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Replays once every 30 minutes for as long as the reading stays out of range, and comes through straight away if things get worse.
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
@@ -77,9 +77,10 @@ The built-in rank icons are the current Rocket League rank set as served by
 [Rocket League Tracker](https://rocketleague.tracker.network/rocket-league/distribution), resized to 256px.
 Rocket League and its rank artwork belong to Psyonix / Epic Games; they are used here as fan content.
 
-**Look.** Settings has a Look picker. *Frosted glass* uses Windows 11 acrylic so the card blurs whatever
-is behind it and stays readable over white pages and dark games alike; it is the default on Windows 11.
-*Dark card* and *Light card* are flat, and *No card* shows only the readout. When the card opacity is low,
+**Look.** Settings has a Look picker. *Dark card* (the default) and *Light card* are flat cards whose
+opacity you control; *No card* shows only the readout. *Frosted glass* uses Windows 11 acrylic to blur
+whatever is behind the card; Windows fixes how see-through acrylic is, so the opacity slider barely
+affects it, and the window has square corners in that mode. When the card opacity is low,
 an outline is added around the text and graph automatically so they still read on any backdrop; the
 Text outline setting forces it always on or off.
 

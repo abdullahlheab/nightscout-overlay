@@ -29,6 +29,8 @@
   }
   /* glass: the OS blurs what is behind, so the card itself can be almost clear */
   body[data-theme="glass"] { --bg: rgba(15, 23, 42, calc(var(--bg-alpha) * 0.5)); }
+  /* the OS paints acrylic over the whole rectangular window, so the card matches it: no radius, no border */
+  body[data-theme="glass"] #card { border-radius: 0; border-color: transparent; box-shadow: none; }
   /* none: no card at all, just the readout with a halo */
   body[data-theme="none"] { --bg: transparent; --border: transparent; --shadow: none; }
   body[data-theme="none"] #card { background: transparent; border-color: transparent; box-shadow: none; }
