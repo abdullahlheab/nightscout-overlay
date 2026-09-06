@@ -192,8 +192,7 @@
 
   // ---- rank badge ----
   const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName');
-  // Drawn fallback badges: used for Supersonic Legend (no icon in the built-in set), for Unranked, and
-  // when an icon file is missing. Original art, not the game's.
+  // Drawn fallback badges, only used if an icon file cannot be loaded. Original art, not the game's.
   const BADGE = {
     bronze:           { a: '#d9945a', b: '#7a4416', wings: 0 },
     silver:           { a: '#e6ebf2', b: '#7c8794', wings: 0 },
@@ -205,7 +204,7 @@
     'supersonic-legend': { a: '#fff8dc', b: '#c9971b', wings: 2, burst: true },
     unranked:         { a: '#9aa4b2', b: '#3b4351', wings: 0 }
   };
-  const BUILTIN_ICONS = '../../assets/ranks/';   // relative to this page; supersonic-legend has no file
+  const BUILTIN_ICONS = '../../assets/ranks/';   // relative to this page
   function badgeSvg(rankKey) {
     const tierKey = (rankKey || 'unranked').replace(/-\d$/, '');
     const t = BADGE[tierKey] || BADGE.unranked;
@@ -241,7 +240,7 @@
   function iconCandidates(dir, file) {
     const urls = [];
     if (dir) for (const ext of ICON_EXT) urls.push(fileUrl(dir.replace(/[\\/]+$/, '') + '/' + file + '.' + ext));
-    if (file !== 'supersonic-legend') urls.push(BUILTIN_ICONS + file + '.png');
+    urls.push(BUILTIN_ICONS + file + '.png');
     return urls;
   }
   function showRank(r) {
@@ -251,7 +250,7 @@
     const key = r.key || 'unranked';
     rankBadge.classList.toggle('legend', key === 'supersonic-legend');
     const drawn = () => { rankBadge.innerHTML = badgeSvg(key); };
-    if (r.key) tryIcons(iconCandidates(rc.iconDir, r.file), drawn); else drawn();
+    tryIcons(iconCandidates(rc.iconDir, r.file || 'unranked'), drawn);
     rankName.textContent = rc.showLabel === false ? '' : (r.key ? r.name : 'Unranked');
     // the numbers live in the tooltip only
     rankRow.title = r.tir === null ? 'Not enough readings yet'

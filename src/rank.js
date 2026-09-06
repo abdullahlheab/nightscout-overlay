@@ -1,6 +1,6 @@
 'use strict';
 // Rocket League style rank for glucose control. Time in range over the last few days maps onto the
-// game's ladder: Bronze I ... Champion III, Grand Champion, Supersonic Legend (20 ranks).
+// game's ladder: Bronze I ... Champion III, Grand Champion I-III, Supersonic Legend (22 ranks).
 // Two numbers shape the whole ladder: where Silver I starts and where Supersonic Legend starts;
 // the ranks in between are spread evenly. Pure module, no Electron, easy to test.
 
@@ -11,7 +11,7 @@ const LADDER = [
   { key: 'platinum-1', name: 'Platinum I' }, { key: 'platinum-2', name: 'Platinum II' }, { key: 'platinum-3', name: 'Platinum III' },
   { key: 'diamond-1', name: 'Diamond I' }, { key: 'diamond-2', name: 'Diamond II' }, { key: 'diamond-3', name: 'Diamond III' },
   { key: 'champion-1', name: 'Champion I' }, { key: 'champion-2', name: 'Champion II' }, { key: 'champion-3', name: 'Champion III' },
-  { key: 'grand-champion', name: 'Grand Champion' },
+  { key: 'grand-champion-1', name: 'Grand Champion I' }, { key: 'grand-champion-2', name: 'Grand Champion II' }, { key: 'grand-champion-3', name: 'Grand Champion III' },
   { key: 'supersonic-legend', name: 'Supersonic Legend' }
 ];
 const SILVER_INDEX = 3;                 // first rank of the evenly spread section
@@ -25,7 +25,7 @@ const MIN_READINGS = 60;                   // about 5 hours of CGM data; below t
 function cutoffs(opts) {
   const floor = clampNum(opts && opts.floor, DEFAULTS.floor, 1, 99);
   const top = clampNum(opts && opts.top, DEFAULTS.top, floor + 1, 100);
-  const steps = SSL_INDEX - SILVER_INDEX;             // 16 gaps from Silver I to Supersonic Legend
+  const steps = SSL_INDEX - SILVER_INDEX;             // 18 gaps from Silver I to Supersonic Legend
   const step = (top - floor) / steps;
   return LADDER.map((_, i) => {
     if (i === 0) return -Infinity;

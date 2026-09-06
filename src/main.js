@@ -35,7 +35,7 @@ const BASE_W = 170;
 const MIN_SCALE = 0.5;
 
 function baseHeight() {
-  return 62 + (config.showGraph ? 44 : 0) + (config.rank && config.rank.enabled ? 27 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
+  return 62 + (config.showGraph ? 44 : 0) + (config.rank && config.rank.enabled ? 31 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
 }
 
 function currentWorkArea() {
