@@ -68,8 +68,8 @@ menu to turn it off again.
 Silver I to III, Gold, Platinum, Diamond, Champion I to III, Grand Champion, Supersonic Legend. Two
 numbers in Settings shape it: where Silver I starts (default 45%) and where Supersonic Legend starts
 (default 97%); the 16 ranks in between are spread evenly, and Bronze II and III sit 10 and 5 points
-below Silver I. A Preview picker shows any rank on the overlay, hovering the rank shows what the next
-one needs, and you can point the app at a folder of your own icons named `bronze-1` ... `champion-3`,
+below Silver I. The row shows just the icon and rank name; hovering it shows your time in range and what the next
+rank needs. A Preview picker shows any rank on the overlay, and you can point the app at a folder of your own icons named `bronze-1` ... `champion-3`,
 `grand-champion`, `supersonic-legend` (.png/.svg/.webp/.jpg). The rank refreshes hourly and needs
 about five hours of readings before it shows.
 

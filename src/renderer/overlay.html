@@ -82,8 +82,7 @@
   #rankBadge.px img { image-rendering: pixelated; }   /* the built-in icons are 16px: crisp pixel art when large */
   #rankBadge.legend svg { filter: drop-shadow(0 0 0.18rem rgba(255, 220, 120, 0.9)); }
   #rankName { font-size: 0.74rem; font-weight: 700; color: var(--fg); white-space: nowrap; }
-  #rankTir { font-size: 0.64rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
-  body.halo #rankName, body.halo #rankTir { text-shadow: 0 0 3px var(--halo), 0 0 7px var(--halo); }
+  body.halo #rankName { text-shadow: 0 0 3px var(--halo), 0 0 7px var(--halo); }
   #graph.hidden { display: none; }
 
   #menu {
@@ -162,7 +161,7 @@
       <span id="age"></span>
     </div>
     <div id="err"></div>
-    <div id="rankRow" class="hidden" title="Glucose rank: time in range over the last 3 days"><span id="rankBadge"></span><span id="rankName"></span><span id="rankTir"></span></div>
+    <div id="rankRow" class="hidden" title="Glucose rank: time in range over the last 3 days"><span id="rankBadge"></span><span id="rankName"></span></div>
     <canvas id="graph"></canvas>
     <div id="alertBar" class="hidden"><span id="alertText"></span><button id="ack" type="button" title="Dismiss and snooze this alert">I see it</button></div>
     <div id="updateBar" class="hidden"><span id="updateText"></span><button id="updateGo" type="button">Update</button><button id="updateLater" type="button" title="Hide for a week">Later</button></div>

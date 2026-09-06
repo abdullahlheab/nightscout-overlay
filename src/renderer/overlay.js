@@ -191,7 +191,7 @@
   window.api.onAlert(showAlert);
 
   // ---- rank badge ----
-  const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName'), rankTir = $('rankTir');
+  const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName');
   // Drawn fallback badges: used for Supersonic Legend (no icon in the built-in set), for Unranked, and
   // when an icon file is missing. Original art, not the game's.
   const BADGE = {
@@ -253,10 +253,9 @@
     const drawn = () => { rankBadge.innerHTML = badgeSvg(key); };
     if (r.key) tryIcons(iconCandidates(rc.iconDir, r.file), drawn); else drawn();
     rankName.textContent = rc.showLabel === false ? '' : (r.key ? r.name : 'Unranked');
-    // short: the row is narrow at the default size; the tooltip carries the full wording
-    rankTir.textContent = r.tir === null ? 'no data yet' : r.tir + '%' + (r.preview ? ' preview' : '');
-    rankRow.title = r.next ? 'Time in range over the last ' + r.days + ' days. Next: ' + r.next.name + ' at ' + r.next.at + '%'
-      : 'Time in range over the last ' + r.days + ' days';
+    // the numbers live in the tooltip only
+    rankRow.title = r.tir === null ? 'Not enough readings yet'
+      : r.tir + '% in range over the last ' + r.days + ' days' + (r.next ? '. Next: ' + r.next.name + ' at ' + r.next.at + '%' : '') + (r.preview ? ' (preview)' : '');
     if (data) render();
   }
   let rankData = null;
