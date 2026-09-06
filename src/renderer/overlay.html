@@ -2,16 +2,36 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' file: data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' file: data:; img-src 'self' file: data:">
 <title>Nightscout Overlay</title>
 <style>
   :root {
     --fg: #f8fafc;
     --muted: #cbd5e1;
     --bg: rgba(15, 23, 42, 0.92);
-    --accent: #22c55e;
+    --border: rgba(255,255,255,0.08);
+    --shadow: 0 4px 16px rgba(0,0,0,0.35);
+    --band: rgba(34,197,94,0.14);
+    --halo: rgba(0,0,0,0.55);
+    --c-ok: #22c55e; --c-warn: #f59e0b; --c-urgent: #ef4444; --c-stale: #94a3b8; --c-info: #60a5fa;
+    --accent: var(--c-ok);
     font-size: 16px;
   }
+  /* light card: dark text, deeper state colours so they hold up on white */
+  body[data-theme="light"] {
+    --fg: #0f172a; --muted: #475569;
+    --bg: rgba(255, 255, 255, var(--bg-alpha));
+    --border: rgba(0,0,0,0.12);
+    --shadow: 0 4px 16px rgba(0,0,0,0.18);
+    --band: rgba(22,163,74,0.14);
+    --halo: rgba(255,255,255,0.85);
+    --c-ok: #15803d; --c-warn: #b45309; --c-urgent: #dc2626; --c-stale: #64748b; --c-info: #1d4ed8;
+  }
+  /* glass: the OS blurs what is behind, so the card itself can be almost clear */
+  body[data-theme="glass"] { --bg: rgba(15, 23, 42, calc(var(--bg-alpha) * 0.5)); }
+  /* none: no card at all, just the readout with a halo */
+  body[data-theme="none"] { --bg: transparent; --border: transparent; --shadow: none; }
+  body[data-theme="none"] #card { background: transparent; border-color: transparent; box-shadow: none; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: transparent; width: 100%; height: 100%; overflow: hidden; }
   body {
@@ -27,16 +47,20 @@
     width: 100%; height: 100%;
     background: var(--bg);
     border-radius: 0.75rem;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
     padding: 0.4rem 0.6rem 0.35rem;
     display: flex; flex-direction: column;
     transition: border-color .3s;
   }
-  #card.in-range   { --accent: #22c55e; }
-  #card.low, #card.high { --accent: #f59e0b; }
-  #card.urgent-low, #card.urgent-high { --accent: #ef4444; animation: pulse 1.2s ease-in-out infinite; }
-  #card.stale, #card.error { --accent: #94a3b8; }
+  #card.in-range   { --accent: var(--c-ok); }
+  #card.low, #card.high { --accent: var(--c-warn); }
+  #card.urgent-low, #card.urgent-high { --accent: var(--c-urgent); animation: pulse 1.2s ease-in-out infinite; }
+  #card.stale, #card.error { --accent: var(--c-stale); }
+  /* halo: a soft outline in the opposite tone so text reads on any backdrop */
+  body.halo #bg, body.halo #arrow, body.halo #meta, body.halo #err, body.halo #alertText, body.halo #updateText {
+    text-shadow: 0 0 3px var(--halo), 0 0 7px var(--halo), 0 1px 2px var(--halo);
+  }
   #card.stale #bg, #card.error #bg { color: var(--muted); }
   @keyframes pulse { 0%,100% { border-color: rgba(239,68,68,.25); } 50% { border-color: rgba(239,68,68,.9); } }
 
@@ -48,6 +72,18 @@
   #err { font-size: 0.66rem; color: #fca5a5; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* explicit CSS size: a canvas with no CSS height grows to its pixel-buffer height on HiDPI screens */
   #graph { flex: none; display: block; width: 100%; height: 2.2rem; margin-top: 0.3rem; }
+
+  /* rank row: badge, tier and division, time in range */
+  #rankRow { flex: none; display: flex; align-items: center; gap: 0.4rem; height: 1.5rem; margin-top: 0.15rem; }
+  #rankRow.hidden { display: none; }
+  #rankBadge { width: 1.45rem; height: 1.45rem; flex: none; display: flex; align-items: center; justify-content: center; }
+  #rankBadge svg, #rankBadge img { width: 100%; height: 100%; display: block; overflow: visible; }
+  #rankBadge img { image-rendering: auto; object-fit: contain; }
+  #rankBadge.px img { image-rendering: pixelated; }   /* the built-in icons are 16px: crisp pixel art when large */
+  #rankBadge.legend svg { filter: drop-shadow(0 0 0.18rem rgba(255, 220, 120, 0.9)); }
+  #rankName { font-size: 0.74rem; font-weight: 700; color: var(--fg); white-space: nowrap; }
+  #rankTir { font-size: 0.64rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
+  body.halo #rankName, body.halo #rankTir { text-shadow: 0 0 3px var(--halo), 0 0 7px var(--halo); }
   #graph.hidden { display: none; }
 
   #menu {
@@ -107,7 +143,7 @@
   #updateGo { background: #2563eb; border-color: #2563eb; }
   #updateGo:hover { background: #1d4ed8; }
   #card.alerting { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent), 0 4px 16px rgba(0,0,0,0.35); }
-  #card.alerting.stale { --accent: #60a5fa; }
+  #card.alerting.stale { --accent: var(--c-info); }
   #card.alerting.flash { animation: flash 1.2s ease-in-out infinite; }
   @keyframes flash {
     0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent), 0 4px 16px rgba(0,0,0,0.35); }
@@ -126,6 +162,7 @@
       <span id="age"></span>
     </div>
     <div id="err"></div>
+    <div id="rankRow" class="hidden" title="Glucose rank: time in range over the last 3 days"><span id="rankBadge"></span><span id="rankName"></span><span id="rankTir"></span></div>
     <canvas id="graph"></canvas>
     <div id="alertBar" class="hidden"><span id="alertText"></span><button id="ack" type="button" title="Dismiss and snooze this alert">I see it</button></div>
     <div id="updateBar" class="hidden"><span id="updateText"></span><button id="updateGo" type="button">Update</button><button id="updateLater" type="button" title="Hide for a week">Later</button></div>

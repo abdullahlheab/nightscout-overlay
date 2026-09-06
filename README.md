@@ -6,6 +6,8 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
+- A Rocket League style **rank** for your control over the last 3 days: Bronze I up to Supersonic Legend, 20 ranks, with the game's rank icons. Time in range decides the rank; the ladder is yours to tune, and you can drop in your own icons.
+- Four looks: frosted glass (Windows 11 acrylic, the default there), dark card, light card, or text only. A soft outline keeps the text readable on any background when the card is see-through.
 - Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Replays once every 30 minutes for as long as the reading stays out of range, and comes through straight away if things get worse.
 - Click-through mode so it never gets in the way of what is underneath.
 - mg/dL or mmol/L, either from your site or forced.
@@ -61,6 +63,28 @@ so the button can be clicked.
 
 In click-through mode the mouse passes straight through the overlay. Use the shortcut or the tray
 menu to turn it off again.
+
+**Rank.** Time in range over the last 3 days is placed on the Rocket League ladder: Bronze I, II, III,
+Silver I to III, Gold, Platinum, Diamond, Champion I to III, Grand Champion, Supersonic Legend. Two
+numbers in Settings shape it: where Silver I starts (default 45%) and where Supersonic Legend starts
+(default 97%); the 16 ranks in between are spread evenly, and Bronze II and III sit 10 and 5 points
+below Silver I. A Preview picker shows any rank on the overlay, hovering the rank shows what the next
+one needs, and you can point the app at a folder of your own icons named `bronze-1` ... `champion-3`,
+`grand-champion`, `supersonic-legend` (.png/.svg/.webp/.jpg). The rank refreshes hourly and needs
+about five hours of readings before it shows.
+
+The built-in rank icons are the 16px Rocket League rank set from [tsicons.com](https://tsicons.com/detail/rocket-league-rank-icons-16x16),
+via [this gist](https://gist.github.com/armollica/2d03767d66218066680493b1f16cb21f). They are small (16px), so they are
+shown smooth at normal sizes and as crisp pixel art when the overlay is large; drop higher-resolution
+files into your own icon folder if you have them. Rocket League and its
+rank artwork belong to Psyonix / Epic Games; they are used here as fan content. Supersonic Legend has no
+icon in that set, so a drawn badge stands in for it.
+
+**Look.** Settings has a Look picker. *Frosted glass* uses Windows 11 acrylic so the card blurs whatever
+is behind it and stays readable over white pages and dark games alike; it is the default on Windows 11.
+*Dark card* and *Light card* are flat, and *No card* shows only the readout. When the card opacity is low,
+an outline is added around the text and graph automatically so they still read on any backdrop; the
+Text outline setting forces it always on or off.
 
 Settings live in a plain JSON file. The path is shown at the bottom of the settings window.
 

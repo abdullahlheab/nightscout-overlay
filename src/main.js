@@ -5,6 +5,7 @@ const store = require('./config');
 const ns = require('./nightscout');
 const updater = require('./updater');
 const alerts = require('./alerts');
+const rank = require('./rank');
 
 // Alert chimes are played by the overlay page without a user gesture.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -22,6 +23,9 @@ let lastPayload = null;
 let hidden = false;
 let activeAlert = null;
 let updateNotice = null;   // { version, ready } shown as a bar in the overlay
+let rankState = null;      // result of rank.computeRank over the last 3 days
+let rankPreview = null;    // a sample rank while the Settings preview picker is used
+let rankTimer = null;
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -31,7 +35,7 @@ const BASE_W = 170;
 const MIN_SCALE = 0.5;
 
 function baseHeight() {
-  return 62 + (config.showGraph ? 44 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
+  return 62 + (config.showGraph ? 44 : 0) + (config.rank && config.rank.enabled ? 27 : 0) + (activeAlert ? 30 : 0) + (updateNotice ? 30 : 0);
 }
 
 function currentWorkArea() {
@@ -101,6 +105,7 @@ function createOverlay() {
 
   overlayWin.setAlwaysOnTop(true, 'screen-saver');
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  applyMaterial();
   overlayWin.setMenu(null);
   overlayWin.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
 
@@ -124,6 +129,12 @@ function createOverlay() {
   overlayWin.on('closed', () => { overlayWin = null; });
 }
 
+// Windows 11 acrylic: the OS blurs whatever is behind the window. Other platforms ignore it.
+function applyMaterial() {
+  if (!overlayWin || typeof overlayWin.setBackgroundMaterial !== 'function') return;
+  try { overlayWin.setBackgroundMaterial(config.theme === 'glass' ? 'acrylic' : 'none'); } catch { /* unsupported */ }
+}
+
 function applyClickThrough() {
   if (!overlayWin) return;
   // An active alert or update notice always takes the mouse so its buttons can be clicked.
@@ -137,6 +148,7 @@ function pushToOverlay() {
   if (lastPayload) overlayWin.webContents.send('overlay:data', lastPayload);
   overlayWin.webContents.send('overlay:alert', activeAlert);
   overlayWin.webContents.send('overlay:update-notice', updateNotice);
+  overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
 }
 
 function publicConfig() {
@@ -178,6 +190,26 @@ async function poll() {
   updateTray();
   // Some fullscreen apps steal the top spot; re-assert it.
   if (overlayWin && !hidden) overlayWin.setAlwaysOnTop(true, 'screen-saver');
+}
+
+// ---------- rank ----------
+async function refreshRank() {
+  if (!config.url || !config.rank || !config.rank.enabled) { rankState = null; return; }
+  try {
+    const entries = await ns.fetchHistory(config, rank.DAYS * 24);
+    const thresholds = (lastPayload && lastPayload.thresholds) || null;
+    rankState = rank.computeRank(entries, thresholds, config.rank);
+  } catch (e) {
+    rankState = rankState || { key: null, name: 'Unranked', file: null, index: -1, tir: null, next: null, readings: 0, days: rank.DAYS };
+  }
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
+  updateTray();
+}
+
+function startRankTimer() {
+  clearInterval(rankTimer);
+  setTimeout(refreshRank, 3000);                 // after the first poll has fetched the thresholds
+  rankTimer = setInterval(refreshRank, 60 * 60 * 1000);
 }
 
 // ---------- alerts ----------
@@ -261,8 +293,9 @@ function openSettings() {
 // ---------- tray ----------
 function trayTitle() {
   if (!lastPayload || lastPayload.error) return 'Nightscout Overlay v' + app.getVersion();
+  const r = rankState && config.rank && config.rank.enabled ? '  ·  ' + rank.label(rankState) : '';
   return lastPayload.display + ' ' + lastPayload.units + ' ' + lastPayload.arrow +
-    '  ' + lastPayload.deltaDisplay + '  (' + lastPayload.ageMin + 'm ago)';
+    '  ' + lastPayload.deltaDisplay + '  (' + lastPayload.ageMin + 'm ago)' + r;
 }
 
 function buildMenu() {
@@ -332,17 +365,30 @@ ipcMain.handle('config:set', (_e, next) => {
   const before = config;
   config = { ...before, ...next,
     thresholds: { ...before.thresholds, ...(next.thresholds || {}) },
-    alerts: { ...before.alerts, ...(next.alerts || {}) } };
+    alerts: { ...before.alerts, ...(next.alerts || {}) },
+    rank: { ...before.rank, ...(next.rank || {}) } };
+  rankPreview = null;
   // Do not reset the alert engine here: the next poll re-evaluates with the new settings, so a
   // condition that is still active keeps its bar without re-chiming, and a disabled one clears.
   store.save(config);
   statusCache = null;
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!config.openAtLogin });
   resizeOverlay();
+  applyMaterial();
   applyClickThrough();
   pushToOverlay();
   startPolling();
+  startRankTimer();
   return config;
+});
+ipcMain.on('rank:preview', (_e, tierKey) => {
+  rankPreview = tierKey ? rank.sample(tierKey, config.rank) : null;
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
+});
+ipcMain.on('rank:refresh', () => refreshRank());
+ipcMain.handle('rank:pick-dir', async () => {
+  const r = await dialog.showOpenDialog(settingsWin || undefined, { title: 'Folder with your rank icons', properties: ['openDirectory'] });
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
 });
 ipcMain.handle('config:test', async (_e, draft) => {
   try { return await ns.testConnection({ ...config, ...draft }); }
@@ -398,6 +444,7 @@ if (!app.requestSingleInstanceLock()) {
     createTray();
     createOverlay();
     startPolling();
+    startRankTimer();
     updater.init();
     updater.onChange((u) => {
       updateTray();

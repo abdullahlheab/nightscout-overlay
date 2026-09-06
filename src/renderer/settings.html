@@ -81,6 +81,25 @@
     </div>
     <div class="row">
       <div>
+        <label for="theme">Look</label>
+        <select id="theme">
+          <option value="dark">Dark card</option>
+          <option value="light">Light card</option>
+          <option value="glass">Frosted glass (Windows 11)</option>
+          <option value="none">No card, text only</option>
+        </select>
+      </div>
+      <div>
+        <label for="outline">Text outline</label>
+        <select id="outline">
+          <option value="auto">Auto (when the card is see-through)</option>
+          <option value="on">Always</option>
+          <option value="off">Never</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
         <label for="scale">Size <span class="rangeval" id="scaleVal"></span></label>
         <input id="scale" type="range" min="0.5" max="16" step="0.1">
         <div class="hint" id="scaleHint"></div>
@@ -93,6 +112,30 @@
     <div class="check"><input id="showGraph" type="checkbox"><label for="showGraph">Show mini graph</label></div>
     <div class="check"><input id="showDelta" type="checkbox"><label for="showDelta">Show change since last reading</label></div>
     <div class="check"><input id="showAge" type="checkbox"><label for="showAge">Show reading age</label></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rank</legend>
+    <div class="check"><input id="rankEnabled" type="checkbox"><label for="rankEnabled">Show a Rocket League style rank for your control over the last 3 days</label></div>
+    <div class="check"><input id="rankShowLabel" type="checkbox"><label for="rankShowLabel">Show the rank name next to the badge</label></div>
+    <div class="row" style="margin-top:6px">
+      <div><label for="rankFloor">Silver I starts at (% time in range)</label><input id="rankFloor" type="number" min="1" max="99"></div>
+      <div><label for="rankTop">Supersonic Legend starts at (%)</label><input id="rankTop" type="number" min="2" max="100"></div>
+    </div>
+    <div class="row">
+      <div><label for="rankPreview">Preview a rank on the overlay</label>
+        <select id="rankPreview"><option value="">Live rank</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end"><span id="rankLadder" class="hint" style="margin:0"></span></div>
+    </div>
+    <label style="margin-top:10px">Your own badge icons (optional)</label>
+
+    <div class="actions" style="margin-top:2px">
+      <button id="pickRankDir" type="button">Choose folder...</button>
+      <span id="rankDirName" class="hint" style="margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button id="clearRankDir" type="button">Clear</button>
+    </div>
+    <div class="hint">Files named like <code>bronze-1</code> ... <code>champion-3</code>, <code>grand-champion</code>, <code>supersonic-legend</code> (.png, .svg, .webp or .jpg). Anything missing falls back to the built-in icons. Bronze I to III sit below the Silver I number; the 16 ranks from Silver I to Grand Champion are spread evenly up to the Supersonic Legend number.</div>
   </fieldset>
 
   <fieldset>

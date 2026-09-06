@@ -48,6 +48,19 @@ async function fetchEntries(cfg) {
     .sort((a, b) => b.date - a.date);
 }
 
+// Readings for the last `hours` hours, oldest first. Used for the rank (time in range over 3 days).
+async function fetchHistory(cfg, hours) {
+  const base = baseUrl(cfg.url);
+  const since = Date.now() - hours * 3600000;
+  const url = base + '/api/v1/entries/sgv.json?find[date][$gte]=' + since + '&count=' + Math.ceil(hours * 12 + 50);
+  const entries = await getJson(withToken(url, cfg.token), 30000);
+  if (!Array.isArray(entries)) throw new Error('Unexpected response from Nightscout');
+  return entries
+    .filter(e => typeof e.sgv === 'number' && e.sgv > 0)
+    .map(e => ({ sgv: e.sgv, date: e.date || Date.parse(e.dateString) }))
+    .sort((a, b) => a.date - b.date);
+}
+
 function resolveThresholds(cfg, status) {
   const server = (status && status.settings && status.settings.thresholds) || {};
   const out = {};
@@ -132,4 +145,4 @@ async function testConnection(cfg) {
   };
 }
 
-module.exports = { fetchPayload, testConnection, buildPayload, ARROWS, MGDL_PER_MMOL };
+module.exports = { fetchPayload, fetchHistory, testConnection, buildPayload, ARROWS, MGDL_PER_MMOL };

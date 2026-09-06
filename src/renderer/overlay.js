@@ -7,15 +7,25 @@
   let cfg = null;
   let data = null;
 
+
   function applyConfig(c) {
     cfg = c;
     document.documentElement.style.fontSize = (16 * (Number(c.scale) || 1)) + 'px';
-    document.documentElement.style.setProperty('--bg', 'rgba(15, 23, 42, ' + (Number(c.opacity) || 0.92) + ')');
+    const alpha = Number.isFinite(Number(c.opacity)) ? Number(c.opacity) : 0.92;
+    document.documentElement.style.setProperty('--bg-alpha', String(alpha));
+    document.documentElement.style.setProperty('--bg', 'rgba(15, 23, 42, ' + alpha + ')');
+    document.body.dataset.theme = c.theme || 'dark';
+    // glass blurs its backdrop, so it only needs the halo when nearly clear
+    const autoAt = c.theme === 'glass' ? 0.3 : 0.7;
+    const halo = c.outline === 'on' || c.theme === 'none' || (c.outline !== 'off' && alpha < autoAt);
+    document.body.classList.toggle('halo', halo);
     canvas.classList.toggle('hidden', !c.showGraph);
     deltaEl.style.display = c.showDelta ? '' : 'none';
     ageEl.style.display = c.showAge ? '' : 'none';
     document.body.classList.toggle('click-through', !!c.clickThrough);
     card.classList.toggle('flash', !!(c.alerts && c.alerts.flash));
+    $('rankBadge').classList.toggle('px', (Number(c.scale) || 1) >= 2.5);
+    if (typeof rankData !== 'undefined') showRank(rankData);
     if (data) render();
   }
 
@@ -75,7 +85,7 @@
     const y = (v) => H - 1 - ((v - lo) / (hi - lo)) * (H - 2);
 
     // target band
-    ctx.fillStyle = 'rgba(34,197,94,0.14)';
+    ctx.fillStyle = getComputedStyle(card).getPropertyValue('--band').trim() || 'rgba(34,197,94,0.14)';
     ctx.fillRect(0, y(th.bgTargetTop), W, y(th.bgTargetBottom) - y(th.bgTargetTop));
 
     if (history.length < 2) return;
@@ -86,15 +96,24 @@
 
     const accent = getComputedStyle(card).getPropertyValue('--accent').trim() || '#22c55e';
     const s = Math.max(1, Number(cfg.scale) || 1);
+    const trace = () => {
+      ctx.beginPath();
+      history.forEach((h, i) => {
+        const px = x(h.t), py = y(h.sgv);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+    };
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (document.body.classList.contains('halo')) {
+      // a wider stroke in the halo tone underneath keeps the line visible on any backdrop
+      ctx.strokeStyle = getComputedStyle(card).getPropertyValue('--halo').trim() || 'rgba(0,0,0,0.85)';
+      ctx.lineWidth = 4.5 * s;
+      trace();
+    }
     ctx.strokeStyle = accent;
     ctx.lineWidth = 1.5 * s;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    history.forEach((h, i) => {
-      const px = x(h.t), py = y(h.sgv);
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    });
-    ctx.stroke();
+    trace();
 
     const last = history[history.length - 1];
     ctx.fillStyle = accent;
@@ -170,6 +189,78 @@
   }
   ackBtn.addEventListener('click', (e) => { e.stopPropagation(); window.api.acknowledgeAlert(); });
   window.api.onAlert(showAlert);
+
+  // ---- rank badge ----
+  const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName'), rankTir = $('rankTir');
+  // Drawn fallback badges: used for Supersonic Legend (no icon in the built-in set), for Unranked, and
+  // when an icon file is missing. Original art, not the game's.
+  const BADGE = {
+    bronze:           { a: '#d9945a', b: '#7a4416', wings: 0 },
+    silver:           { a: '#e6ebf2', b: '#7c8794', wings: 0 },
+    gold:             { a: '#ffe066', b: '#9a6400', wings: 0 },
+    platinum:         { a: '#a7f0e8', b: '#137a72', wings: 0 },
+    diamond:          { a: '#8cc7ff', b: '#1d4fa8', wings: 0 },
+    champion:         { a: '#d4a6ff', b: '#5b21b6', wings: 1 },
+    'grand-champion': { a: '#ff7b93', b: '#8f1233', wings: 2 },
+    'supersonic-legend': { a: '#fff8dc', b: '#c9971b', wings: 2, burst: true },
+    unranked:         { a: '#9aa4b2', b: '#3b4351', wings: 0 }
+  };
+  const BUILTIN_ICONS = '../../assets/ranks/';   // relative to this page; supersonic-legend has no file
+  function badgeSvg(rankKey) {
+    const tierKey = (rankKey || 'unranked').replace(/-\d$/, '');
+    const t = BADGE[tierKey] || BADGE.unranked;
+    const id = 'g_' + tierKey;
+    const wing = (dir) => `<path d="M${dir > 0 ? 58 : 6} 30 l${dir * 6} -8 l${-dir * 2} 9 l${dir * 6} -5 l${-dir * 3} 10 l${dir * 5} -3 l${-dir * 9} 8 z" fill="${t.a}" opacity="0.9"/>`;
+    return `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.a}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>
+        <linearGradient id="${id}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.b}"/><stop offset="1" stop-color="#0b1020"/></linearGradient>
+      </defs>
+      ${t.burst ? '<g fill="' + t.a + '" opacity="0.85"><path d="M32 0 l3 9 -3 -3 -3 3z"/><path d="M32 64 l3 -9 -3 3 -3 -3z"/><path d="M0 32 l9 3 -3 -3 3 -3z"/><path d="M64 32 l-9 3 3 -3 -3 -3z"/></g>' : ''}
+      ${t.wings >= 1 ? wing(1) + wing(-1) : ''}
+      <polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="url(#${id})" stroke="${t.b}" stroke-width="1.5" stroke-linejoin="round"/>
+      <polygon points="32,11 50,21.5 50,42.5 32,53 14,42.5 14,21.5" fill="url(#${id}i)" opacity="0.95"/>
+      <!-- rocket -->
+      <path d="M32 17 c5 5 6 12 5 19 h-10 c-1 -7 0 -14 5 -19z" fill="#f8fafc"/>
+      <circle cx="32" cy="28" r="2.6" fill="${t.b}"/>
+      <path d="M27 33 l-4 5 h5z M37 33 l4 5 h-5z" fill="${t.a}"/>
+      <path d="M29.5 37 h5 l-2.5 6z" fill="${t.a}"/>
+      ${t.wings >= 2 ? '<path d="M20 44 h24" stroke="' + t.a + '" stroke-width="2" stroke-linecap="round" opacity="0.8"/>' : ''}
+    </svg>`;
+  }
+  const ICON_EXT = ['png', 'svg', 'webp', 'jpg'];
+  // Try each candidate URL in turn; the first that loads wins, otherwise draw the fallback badge.
+  function tryIcons(urls, onFail) {
+    if (!urls.length) return onFail();
+    const img = document.createElement('img');
+    img.alt = '';
+    img.onerror = () => tryIcons(urls.slice(1), onFail);
+    img.src = urls[0];
+    rankBadge.replaceChildren(img);
+  }
+  function iconCandidates(dir, file) {
+    const urls = [];
+    if (dir) for (const ext of ICON_EXT) urls.push(fileUrl(dir.replace(/[\\/]+$/, '') + '/' + file + '.' + ext));
+    if (file !== 'supersonic-legend') urls.push(BUILTIN_ICONS + file + '.png');
+    return urls;
+  }
+  function showRank(r) {
+    const rc = (cfg && cfg.rank) || {};
+    if (!rc.enabled || !r) { rankRow.classList.add('hidden'); return; }
+    rankRow.classList.remove('hidden');
+    const key = r.key || 'unranked';
+    rankBadge.classList.toggle('legend', key === 'supersonic-legend');
+    const drawn = () => { rankBadge.innerHTML = badgeSvg(key); };
+    if (r.key) tryIcons(iconCandidates(rc.iconDir, r.file), drawn); else drawn();
+    rankName.textContent = rc.showLabel === false ? '' : (r.key ? r.name : 'Unranked');
+    // short: the row is narrow at the default size; the tooltip carries the full wording
+    rankTir.textContent = r.tir === null ? 'no data yet' : r.tir + '%' + (r.preview ? ' preview' : '');
+    rankRow.title = r.next ? 'Time in range over the last ' + r.days + ' days. Next: ' + r.next.name + ' at ' + r.next.at + '%'
+      : 'Time in range over the last ' + r.days + ' days';
+    if (data) render();
+  }
+  let rankData = null;
+  window.api.onRank((r) => { rankData = r; showRank(r); });
 
   // ---- update notice ----
   const updateBar = $('updateBar'), updateText = $('updateText'), updateGo = $('updateGo');
