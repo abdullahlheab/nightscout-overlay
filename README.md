@@ -5,7 +5,7 @@ fullscreen apps. It reads from **your own Nightscout site** and shows the curren
 arrow, change since the last reading, how old the reading is, and a mini graph of the last few hours.
 
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
-- Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
+- Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale). Ranges default to 60 / 70 / 180 / 250 mg/dL and are editable; clear one to use your Nightscout site's value.
 - A Rocket League style **rank and MMR** for your control over the last 3 days: Bronze I up to Supersonic Legend, all 22 ranks with the game's icons and MMR cutoffs. Time in range sets the base, lows and spikes cost points, steadiness earns some. The row shows the MMR and its change since yesterday; click it for a full breakdown and a per-day summary.
 - Four looks: dark card (default), light card, text only, or frosted glass on Windows 11. A soft outline keeps the text readable on any background when the card is see-through.
 - Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Replays once every 30 minutes for as long as the reading stays out of range, and comes through straight away if things get worse.

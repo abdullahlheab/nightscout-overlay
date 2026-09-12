@@ -29,7 +29,8 @@ const DEFAULTS = {
     floor: 45,            // time in range % where Silver I starts (Bronze I-III sit below it)
     top: 97               // time in range % where Supersonic Legend starts; ranks in between are spread evenly
   },
-  thresholds: { bgLow: null, bgTargetBottom: null, bgTargetTop: null, bgHigh: null }, // null = use Nightscout's
+  // urgent low, low, high, urgent high (mg/dL). Any left blank (null) falls back to the Nightscout site's value.
+  thresholds: { bgLow: 60, bgTargetBottom: 70, bgTargetTop: 180, bgHigh: 250 },
   alerts: {
     enabled: true, low: true, high: true, urgent: true, stale: true,
     sound: 'chime',        // chime | bell | beep | custom | silent
@@ -55,6 +56,9 @@ function load() {
     if (raw.alerts && raw.alerts.remindMinutes === undefined && raw.alerts.snoozeMinutes) alerts.remindMinutes = raw.alerts.snoozeMinutes;
     delete alerts.repeatMinutes; delete alerts.snoozeMinutes;
     const rank = { ...DEFAULTS.rank, ...(raw.rank || {}) }; delete rank.cutoffs;
+    // 0.5.1: ranges got real defaults; installs that never set their own move onto them once
+    const t = raw.thresholds || {};
+    if (!raw.thresholdsMigrated && [t.bgLow, t.bgTargetBottom, t.bgTargetTop, t.bgHigh].every(v => v === null || v === undefined)) { raw.thresholds = { ...DEFAULTS.thresholds }; raw.thresholdsMigrated = true; }
     // 0.4.0-0.4.2 defaulted Windows 11 to glass; it cannot be made see-through, so move those back to the dark card once
     if (raw.theme === 'glass' && !raw.glassMigrated) { raw.theme = 'dark'; raw.glassMigrated = true; }
     return { ...DEFAULTS, ...raw,
