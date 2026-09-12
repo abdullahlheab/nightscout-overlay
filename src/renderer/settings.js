@@ -16,7 +16,7 @@
     const floor = Number($('rankFloor').value), top = Number($('rankTop').value);
     if (!Number.isFinite(floor) || !Number.isFinite(top) || top <= floor) { $('rankLadder').textContent = ''; return; }
     const step = (top - floor) / 18;
-    $('rankLadder').textContent = 'Gold I ' + (floor + 3 * step).toFixed(1) + '%, Diamond I ' + (floor + 9 * step).toFixed(1) + '%, Grand Champion I ' + (floor + 15 * step).toFixed(1) + '%';
+    $('rankLadder').textContent = 'Roughly: Gold I ' + (floor + 3 * step).toFixed(0) + '%, Diamond I ' + (floor + 9 * step).toFixed(0) + '%, Grand Champion I ' + (floor + 15 * step).toFixed(0) + '% in range';
   }
   $('rankFloor').addEventListener('input', updateLadderHint);
   $('rankTop').addEventListener('input', updateLadderHint);
@@ -35,6 +35,7 @@
     const rk = cfg.rank || {};
     $('rankEnabled').checked = !!rk.enabled;
     $('rankShowLabel').checked = rk.showLabel !== false;
+    $('rankShowMmr').checked = rk.showMmr !== false;
     $('rankFloor').value = rk.floor ?? 45;
     $('rankTop').value = rk.top ?? 97;
     updateLadderHint();
@@ -60,7 +61,7 @@
       out.alerts[k] = el.type === 'checkbox' ? el.checked : (el.type === 'number' || el.type === 'range') ? num(el.value, undefined) : el.value;
     }
     out.alerts.customSound = customSound;
-    out.rank = { enabled: $('rankEnabled').checked, showLabel: $('rankShowLabel').checked, iconDir: rankDir,
+    out.rank = { enabled: $('rankEnabled').checked, showLabel: $('rankShowLabel').checked, showMmr: $('rankShowMmr').checked, iconDir: rankDir,
       floor: num($('rankFloor').value, 45), top: num($('rankTop').value, 97) };
     if (out.url && !/^https?:\/\//i.test(out.url)) out.url = 'https://' + out.url;
     return out;

@@ -6,7 +6,7 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale).
-- A Rocket League style **rank** for your control over the last 3 days: Bronze I up to Supersonic Legend, all 22 ranks, with the game's rank icons. Time in range decides the rank; the ladder is yours to tune, and you can drop in your own icons.
+- A Rocket League style **rank and MMR** for your control over the last 3 days: Bronze I up to Supersonic Legend, all 22 ranks with the game's icons and MMR cutoffs. Time in range sets the base, lows and spikes cost points, steadiness earns some. The row shows the MMR and its change since yesterday; click it for a full breakdown and a per-day summary.
 - Four looks: dark card (default), light card, text only, or frosted glass on Windows 11. A soft outline keeps the text readable on any background when the card is see-through.
 - Gentle alerts for low, high, urgent and missing data: a soft chime and an **I see it** button on the overlay. Replays once every 30 minutes for as long as the reading stays out of range, and comes through straight away if things get worse.
 - Click-through mode so it never gets in the way of what is underneath.
@@ -64,14 +64,21 @@ so the button can be clicked.
 In click-through mode the mouse passes straight through the overlay. Use the shortcut or the tray
 menu to turn it off again.
 
-**Rank.** Time in range over the last 3 days is placed on the Rocket League ladder: Bronze I, II, III,
-Silver I to III, Gold, Platinum, Diamond, Champion I to III, Grand Champion I to III, Supersonic Legend. Two
-numbers in Settings shape it: where Silver I starts (default 45%) and where Supersonic Legend starts
-(default 97%); the 18 ranks in between are spread evenly, and Bronze II and III sit 10 and 5 points
-below Silver I. The row shows just the icon and rank name; hovering it shows your time in range and what the next
-rank needs. A Preview picker shows any rank on the overlay, and you can point the app at a folder of your own icons named `bronze-1` ... `champion-3`,
-`grand-champion-1` to `-3`, `supersonic-legend`, `unranked` (.png/.svg/.webp/.jpg). The rank refreshes hourly and needs
-about five hours of readings before it shows.
+**Rank and MMR.** The last 3 days of readings become an MMR on the game's scale (Silver I from 175,
+Gold I 355, Platinum I 595, Diamond I 835, Champion I 1075, Grand Champion I 1435, Supersonic Legend 1861):
+
+- *Time in range* sets the base. Two settings anchor it: the time in range that equals Silver I
+  (default 45%) and the one that equals Supersonic Legend (default 97%).
+- *Lows* cost 8 MMR per percent of readings below target beyond 4%; *very lows* 20 per percent below
+  the urgent-low line beyond 1%; *spikes* 4 per percent above the urgent-high line beyond 5%.
+- *Steadiness* adds up to 40 MMR when glucose variability (CV) is under 36%.
+
+The overlay row shows the rank icon, name, MMR and the change since this time yesterday. Click the row
+for an overview: each part of the MMR with how it moved over 24 hours, progress to the next rank, and
+a per-day table of time in range, lows, highs and average. The rank refreshes hourly, keeps two weeks
+of hourly snapshots locally to compute the changes, and needs about five hours of readings to show.
+A Preview picker in Settings shows any rank, and you can point the app at a folder of your own icons
+named `bronze-1` ... `champion-3`, `grand-champion-1` to `-3`, `supersonic-legend`, `unranked`.
 
 The built-in rank icons are the current Rocket League rank set as served by
 [Rocket League Tracker](https://rocketleague.tracker.network/rocket-league/distribution), resized to 256px.

@@ -118,6 +118,7 @@
     <legend>Rank</legend>
     <div class="check"><input id="rankEnabled" type="checkbox"><label for="rankEnabled">Show a Rocket League style rank for your control over the last 3 days</label></div>
     <div class="check"><input id="rankShowLabel" type="checkbox"><label for="rankShowLabel">Show the rank name next to the badge</label></div>
+    <div class="check"><input id="rankShowMmr" type="checkbox"><label for="rankShowMmr">Show the MMR and its change since yesterday</label></div>
     <div class="row" style="margin-top:6px">
       <div><label for="rankFloor">Silver I starts at (% time in range)</label><input id="rankFloor" type="number" min="1" max="99"></div>
       <div><label for="rankTop">Supersonic Legend starts at (%)</label><input id="rankTop" type="number" min="2" max="100"></div>
@@ -135,7 +136,7 @@
       <span id="rankDirName" class="hint" style="margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <button id="clearRankDir" type="button">Clear</button>
     </div>
-    <div class="hint">Files named like <code>bronze-1</code> ... <code>champion-3</code>, <code>grand-champion-1</code> to <code>-3</code>, <code>supersonic-legend</code>, <code>unranked</code> (.png, .svg, .webp or .jpg). Anything missing falls back to the built-in icons. Bronze I to III sit below the Silver I number; the 18 ranks from Silver I to Grand Champion III are spread evenly up to the Supersonic Legend number.</div>
+    <div class="hint">Files named like <code>bronze-1</code> ... <code>champion-3</code>, <code>grand-champion-1</code> to <code>-3</code>, <code>supersonic-legend</code>, <code>unranked</code> (.png, .svg, .webp or .jpg). Anything missing falls back to the built-in icons. The two percentages anchor the MMR scale: Silver I is 175 MMR, Supersonic Legend 1861, and every rank in between uses the game's cutoffs. Lows, very lows and spikes take MMR away; steady glucose adds some. Click the rank on the overlay for the full breakdown.</div>
   </fieldset>
 
   <fieldset>

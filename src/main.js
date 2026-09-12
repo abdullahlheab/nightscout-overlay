@@ -6,6 +6,7 @@ const ns = require('./nightscout');
 const updater = require('./updater');
 const alerts = require('./alerts');
 const rank = require('./rank');
+const fs = require('fs');
 
 // Alert chimes are played by the overlay page without a user gesture.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -26,6 +27,9 @@ let updateNotice = null;   // { version, ready } shown as a bar in the overlay
 let rankState = null;      // result of rank.computeRank over the last 3 days
 let rankPreview = null;    // a sample rank while the Settings preview picker is used
 let rankTimer = null;
+let rankHistory = [];      // [{ t, mmr, parts }] snapshots, so the overview can say what changed
+let rankUpdatedAt = null;
+let overviewWin = null;
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -148,7 +152,77 @@ function pushToOverlay() {
   if (lastPayload) overlayWin.webContents.send('overlay:data', lastPayload);
   overlayWin.webContents.send('overlay:alert', activeAlert);
   overlayWin.webContents.send('overlay:update-notice', updateNotice);
-  overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
+  overlayWin.webContents.send('overlay:rank', rankPayload());
+}
+
+// ---------- rank history (for "what changed") ----------
+const HISTORY_KEEP_MS = 14 * 24 * 60 * 60 * 1000;
+function historyFile() { return path.join(app.getPath('userData'), 'rank-history.json'); }
+function loadHistory() {
+  try { rankHistory = JSON.parse(fs.readFileSync(historyFile(), 'utf8')); if (!Array.isArray(rankHistory)) rankHistory = []; }
+  catch { rankHistory = []; }
+}
+function recordHistory(r) {
+  if (!r || r.mmr === null || r.mmr === undefined) return;
+  const now = Date.now();
+  const last = rankHistory[rankHistory.length - 1];
+  // one snapshot per refresh; manual refreshes within 10 minutes just update the last one
+  if (last && now - last.t < 10 * 60 * 1000) { last.t = now; last.mmr = r.mmr; last.parts = r.parts; }
+  else rankHistory.push({ t: now, mmr: r.mmr, parts: r.parts });
+  rankHistory = rankHistory.filter(h => now - h.t < HISTORY_KEEP_MS);
+  try { fs.writeFileSync(historyFile(), JSON.stringify(rankHistory)); } catch { /* ignore */ }
+}
+// The snapshot nearest to 24 hours ago (must be at least 6 hours old to be a meaningful comparison).
+function snapshotAgo(ms) {
+  const target = Date.now() - ms;
+  let best = null;
+  for (const h of rankHistory) {
+    if (Date.now() - h.t < 6 * 60 * 60 * 1000) continue;
+    if (!best || Math.abs(h.t - target) < Math.abs(best.t - target)) best = h;
+  }
+  return best;
+}
+function rankPayload() {
+  if (rankPreview) return rankPreview;
+  if (!rankState) return null;
+  const ago = snapshotAgo(24 * 60 * 60 * 1000);
+  return {
+    ...rankState,
+    delta24h: ago && rankState.mmr !== null ? rankState.mmr - ago.mmr : null,
+    parts24h: ago ? ago.parts : null,
+    updatedAt: rankUpdatedAt
+  };
+}
+
+// ---------- overview window (click on the rank row) ----------
+function overviewData() {
+  return { rank: rankPayload(), delta24h: (rankPayload() || {}).delta24h ?? null, parts24h: (rankPayload() || {}).parts24h || null, updatedAt: rankUpdatedAt, config: publicConfig() };
+}
+function sendOverview() {
+  if (overviewWin && !overviewWin.isDestroyed()) overviewWin.webContents.send('overview:data', overviewData());
+}
+function toggleOverview() {
+  if (overviewWin && !overviewWin.isDestroyed()) { overviewWin.close(); return; }
+  const W = 360, H = 690;
+  const ob = overlayWin ? overlayWin.getBounds() : { x: 100, y: 100, width: 170, height: 106 };
+  const wa = currentWorkArea();
+  let x = ob.x + ob.width + 8, y = ob.y;
+  if (x + W > wa.x + wa.width) x = ob.x - W - 8;                 // no room on the right: open on the left
+  x = Math.max(wa.x, Math.min(x, wa.x + wa.width - W));
+  y = Math.max(wa.y, Math.min(y, wa.y + wa.height - H));
+  overviewWin = new BrowserWindow({
+    x, y, width: W, height: H,
+    frame: false, transparent: true, resizable: false, minimizable: false, maximizable: false,
+    skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, thickFrame: false,
+    backgroundColor: '#00000000',
+    webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false, sandbox: true }
+  });
+  overviewWin.setAlwaysOnTop(true, 'screen-saver');
+  overviewWin.setMenu(null);
+  overviewWin.loadFile(path.join(__dirname, 'renderer', 'overview.html'));
+  overviewWin.once('ready-to-show', () => { overviewWin.show(); overviewWin.focus(); });
+  overviewWin.on('blur', () => { if (overviewWin && !overviewWin.isDestroyed()) overviewWin.close(); });
+  overviewWin.on('closed', () => { overviewWin = null; });
 }
 
 function publicConfig() {
@@ -199,10 +273,13 @@ async function refreshRank() {
     const entries = await ns.fetchHistory(config, rank.DAYS * 24);
     const thresholds = (lastPayload && lastPayload.thresholds) || null;
     rankState = rank.computeRank(entries, thresholds, config.rank);
+    rankUpdatedAt = Date.now();
+    recordHistory(rankState);
   } catch (e) {
-    rankState = rankState || { key: null, name: 'Unranked', file: null, index: -1, tir: null, next: null, readings: 0, days: rank.DAYS };
+    rankState = rankState || { key: null, name: 'Unranked', file: null, index: -1, mmr: null, parts: null, next: null, progress: 0, stats: null, readings: 0, days: rank.DAYS };
   }
-  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPayload());
+  sendOverview();
   updateTray();
 }
 
@@ -293,7 +370,7 @@ function openSettings() {
 // ---------- tray ----------
 function trayTitle() {
   if (!lastPayload || lastPayload.error) return 'Nightscout Overlay v' + app.getVersion();
-  const r = rankState && config.rank && config.rank.enabled ? '  ·  ' + rank.label(rankState) : '';
+  const r = rankState && config.rank && config.rank.enabled ? '  ·  ' + rank.label(rankState) + (rankState.mmr !== null ? ' ' + rankState.mmr + ' MMR' : '') : '';
   return lastPayload.display + ' ' + lastPayload.units + ' ' + lastPayload.arrow +
     '  ' + lastPayload.deltaDisplay + '  (' + lastPayload.ageMin + 'm ago)' + r;
 }
@@ -382,9 +459,13 @@ ipcMain.handle('config:set', (_e, next) => {
   return config;
 });
 ipcMain.on('rank:preview', (_e, tierKey) => {
-  rankPreview = tierKey ? rank.sample(tierKey, config.rank) : null;
-  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPreview || rankState);
+  rankPreview = tierKey ? rank.sample(tierKey) : null;
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPayload());
+  sendOverview();
 });
+ipcMain.on('rank:overview', toggleOverview);
+ipcMain.on('overview:request', sendOverview);
+ipcMain.on('overview:close', () => { if (overviewWin && !overviewWin.isDestroyed()) overviewWin.close(); });
 ipcMain.on('rank:refresh', () => refreshRank());
 ipcMain.handle('rank:pick-dir', async () => {
   const r = await dialog.showOpenDialog(settingsWin || undefined, { title: 'Folder with your rank icons', properties: ['openDirectory'] });
@@ -441,6 +522,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     config = store.load();
+    loadHistory();
     createTray();
     createOverlay();
     startPolling();

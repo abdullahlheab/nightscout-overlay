@@ -191,7 +191,7 @@
   window.api.onAlert(showAlert);
 
   // ---- rank badge ----
-  const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName');
+  const rankRow = $('rankRow'), rankBadge = $('rankBadge'), rankName = $('rankName'), rankMmr = $('rankMmr'), rankDelta = $('rankDelta');
   // Drawn fallback badges, only used if an icon file cannot be loaded. Original art, not the game's.
   const BADGE = {
     bronze:           { a: '#d9945a', b: '#7a4416', wings: 0 },
@@ -252,13 +252,18 @@
     const drawn = () => { rankBadge.innerHTML = badgeSvg(key); };
     tryIcons(iconCandidates(rc.iconDir, r.file || 'unranked'), drawn);
     rankName.textContent = rc.showLabel === false ? '' : (r.key ? r.name : 'Unranked');
-    // the numbers live in the tooltip only
-    rankRow.title = r.tir === null ? 'Not enough readings yet'
-      : r.tir + '% in range over the last ' + r.days + ' days' + (r.next ? '. Next: ' + r.next.name + ' at ' + r.next.at + '%' : '') + (r.preview ? ' (preview)' : '');
+    const ranked = r.mmr !== null && r.mmr !== undefined;
+    rankMmr.textContent = ranked && rc.showMmr !== false ? String(r.mmr) : '';
+    const d = ranked && rc.showMmr !== false ? r.delta24h : null;
+    if (d === null || d === undefined) { rankDelta.textContent = ''; rankDelta.className = ''; }
+    else { rankDelta.textContent = (d > 0 ? '▲' : d < 0 ? '▼' : '–') + Math.abs(d); rankDelta.className = d > 0 ? 'up' : d < 0 ? 'down' : 'flat'; }
+    rankRow.title = !ranked ? 'Not enough readings yet. Click for details.'
+      : r.mmr + ' MMR' + (d === null || d === undefined ? '' : ' (' + (d >= 0 ? '+' : '') + d + ' since yesterday)') + (r.next ? '. ' + r.next.name + ' at ' + r.next.mmr : '') + '. Click for the 3-day overview.';
     if (data) render();
   }
   let rankData = null;
   window.api.onRank((r) => { rankData = r; showRank(r); });
+  rankRow.addEventListener('click', (e) => { e.stopPropagation(); window.api.openRankOverview(); });
 
   // ---- update notice ----
   const updateBar = $('updateBar'), updateText = $('updateText'), updateGo = $('updateGo');

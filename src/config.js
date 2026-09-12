@@ -24,6 +24,7 @@ const DEFAULTS = {
   rank: {                 // Rocket League style rank from time in range over the last 3 days
     enabled: true,
     showLabel: true,
+    showMmr: true,        // MMR number and 24h change on the row
     iconDir: '',          // optional folder with bronze-1.png ... supersonic-legend.png to replace the built-in badges
     floor: 45,            // time in range % where Silver I starts (Bronze I-III sit below it)
     top: 97               // time in range % where Supersonic Legend starts; ranks in between are spread evenly

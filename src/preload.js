@@ -15,6 +15,11 @@ contextBridge.exposeInMainWorld('api', {
   previewRank: (tier) => ipcRenderer.send('rank:preview', tier),
   refreshRank: () => ipcRenderer.send('rank:refresh'),
   pickRankDir: () => ipcRenderer.invoke('rank:pick-dir'),
+  openRankOverview: () => ipcRenderer.send('rank:overview'),
+  // overview window
+  onOverview: (cb) => ipcRenderer.on('overview:data', (_e, d) => cb(d)),
+  requestOverview: () => ipcRenderer.send('overview:request'),
+  closeOverview: () => ipcRenderer.send('overview:close'),
   dismissUpdate: () => ipcRenderer.send('update:dismiss'),
   testAlert: (kind) => ipcRenderer.send('alert:test', kind),
   pickSound: () => ipcRenderer.invoke('alert:pick-sound'),

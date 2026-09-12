@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:">
+<title>Rank overview</title>
+<style>
+  :root { --fg: #f8fafc; --muted: #94a3b8; --line: rgba(255,255,255,0.08); --up: #22c55e; --down: #ef4444; --accent: #60a5fa; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; height: 100%; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif; color: var(--fg); font-size: 13px; -webkit-user-select: none; user-select: none; }
+  #card { position: relative; height: 100%; background: rgba(15, 23, 42, 0.97); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  #close { position: absolute; top: 8px; right: 10px; width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; }
+  #close:hover { background: rgba(255,255,255,0.1); color: var(--fg); }
+  #head { display: flex; align-items: center; gap: 12px; }
+  #badge { width: 56px; height: 56px; flex: none; }
+  #badge img, #badge svg { width: 100%; height: 100%; display: block; }
+  #title { font-size: 18px; font-weight: 700; line-height: 1.1; }
+  #mmrLine { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+  #mmr { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  #mmrUnit { color: var(--muted); font-size: 12px; }
+  .delta { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .delta.up { color: var(--up); } .delta.down { color: var(--down); } .delta.flat { color: var(--muted); }
+  #sub { color: var(--muted); font-size: 12px; }
+  #bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  #barFill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #60a5fa); border-radius: 3px; transition: width .4s; }
+  #next { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; margin-top: -4px; }
+  h3 { margin: 4px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  td, th { padding: 5px 0 5px 10px; border-bottom: 1px solid var(--line); text-align: right; font-weight: 500; white-space: nowrap; vertical-align: top; }
+  td:first-child, th:first-child { text-align: left; color: var(--fg); padding-left: 0; width: 100%; white-space: normal; }
+  th { color: var(--muted); font-size: 11px; font-weight: 600; }
+  .why { display: block; color: var(--muted); font-size: 10.5px; font-weight: 400; margin-top: 1px; }
+  tr.total td { font-weight: 700; border-bottom: none; }
+  #foot { color: var(--muted); font-size: 11px; margin-top: auto; display: flex; justify-content: space-between; }
+  #empty { color: var(--muted); padding: 20px 0; text-align: center; }
+</style>
+</head>
+<body>
+  <div id="card">
+    <button id="close" title="Close (Esc)">&#215;</button>
+    <div id="head">
+      <div id="badge"></div>
+      <div>
+        <div id="title">Unranked</div>
+        <div id="mmrLine"><span id="mmr">--</span><span id="mmrUnit">MMR</span><span id="delta24" class="delta flat"></span></div>
+        <div id="sub"></div>
+      </div>
+    </div>
+    <div id="bar"><div id="barFill"></div></div>
+    <div id="next"><span id="nextLeft"></span><span id="nextRight"></span></div>
+
+    <div id="empty" class="hidden" hidden>Not enough readings yet. The rank needs about five hours of data.</div>
+
+    <h3>How the MMR is made up</h3>
+    <table id="parts">
+      <thead><tr><th>Part</th><th>Now</th><th>vs 24h</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Last 3 days</h3>
+    <table id="days">
+      <thead><tr><th>Day</th><th>In range</th><th>Low</th><th>High</th><th>Avg</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="foot"><span id="window"></span><span id="updated"></span></div>
+  </div>
+  <script src="overview.js"></script>
+</body>
+</html>
