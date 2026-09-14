@@ -29,6 +29,8 @@ let rankPreview = null;    // a sample rank while the Settings preview picker is
 let rankTimer = null;
 let rankHistory = [];      // [{ t, mmr, parts }] snapshots, so the overview can say what changed
 let rankUpdatedAt = null;
+let rankBusy = false;
+let rankError = null;
 let overviewWin = null;
 
 const ASSETS = path.join(__dirname, '..', 'assets');
@@ -196,7 +198,8 @@ function rankPayload() {
 
 // ---------- overview window (click on the rank row) ----------
 function overviewData() {
-  return { rank: rankPayload(), delta24h: (rankPayload() || {}).delta24h ?? null, parts24h: (rankPayload() || {}).parts24h || null, updatedAt: rankUpdatedAt, config: publicConfig() };
+  const p = rankPayload() || {};
+  return { rank: rankPayload(), delta24h: p.delta24h ?? null, parts24h: p.parts24h || null, updatedAt: rankUpdatedAt, refreshing: rankBusy, error: rankError, config: publicConfig() };
 }
 function sendOverview() {
   if (overviewWin && !overviewWin.isDestroyed()) overviewWin.webContents.send('overview:data', overviewData());
@@ -269,15 +272,21 @@ async function poll() {
 // ---------- rank ----------
 async function refreshRank() {
   if (!config.url || !config.rank || !config.rank.enabled) { rankState = null; return; }
+  if (rankBusy) return;
+  rankBusy = true;
+  sendOverview();   // lets the overview show that a refresh is in progress
   try {
     const entries = await ns.fetchHistory(config, rank.DAYS * 24);
     const thresholds = (lastPayload && lastPayload.thresholds) || null;
     rankState = rank.computeRank(entries, thresholds, config.rank);
     rankUpdatedAt = Date.now();
+    rankError = null;
     recordHistory(rankState);
   } catch (e) {
+    rankError = (e && e.message) || String(e);
     rankState = rankState || { key: null, name: 'Unranked', file: null, index: -1, mmr: null, parts: null, next: null, progress: 0, stats: null, readings: 0, days: rank.DAYS };
   }
+  rankBusy = false;
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('overlay:rank', rankPayload());
   sendOverview();
   updateTray();

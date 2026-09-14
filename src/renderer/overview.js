@@ -19,6 +19,12 @@
     el.textContent = (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '– ') + sign + d + suffix;
     el.className = 'delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat');
   }
+  // "Updated 09:15" today, otherwise include the day so a stale result is obvious
+  function updatedText(t) {
+    const d = new Date(t), now = new Date();
+    const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return d.toDateString() === now.toDateString() ? time : d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + time;
+  }
   function dayName(iso) {
     const [y, m, d] = iso.split('-').map(Number);
     const date = new Date(y, m - 1, d);
@@ -83,11 +89,17 @@
       }
     }
     $('window').textContent = ranked ? r.stats.readings + ' readings over the last ' + r.days + ' days' + (r.preview ? ' (preview)' : '') : '';
-    $('updated').textContent = d.updatedAt ? 'Updated ' + new Date(d.updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+    $('updated').textContent = d.updatedAt ? 'Updated ' + updatedText(d.updatedAt) : 'Not updated yet';
+    const btn = $('refresh');
+    btn.disabled = !!d.refreshing;
+    btn.textContent = d.refreshing ? 'Refreshing...' : 'Refresh rank';
+    $('err').hidden = !d.error;
+    $('err').textContent = d.error ? 'Last refresh failed: ' + d.error + '. Showing the previous result.' : '';
   }
 
   window.api.onOverview(render);
   $('close').addEventListener('click', () => window.api.closeOverview());
+  $('refresh').addEventListener('click', () => { $('refresh').disabled = true; $('refresh').textContent = 'Refreshing...'; window.api.refreshRank(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.api.closeOverview(); });
   window.api.requestOverview();
 })();

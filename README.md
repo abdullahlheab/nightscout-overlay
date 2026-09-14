@@ -75,7 +75,8 @@ Gold I 355, Platinum I 595, Diamond I 835, Champion I 1075, Grand Champion I 143
 
 The overlay row shows the rank icon, name, MMR and the change since this time yesterday. Click the row
 for an overview: each part of the MMR with how it moved over 24 hours, progress to the next rank, and
-a per-day table of time in range, lows, highs and average. The rank refreshes hourly, keeps two weeks
+a per-day table of time in range, lows, highs and average, plus a Refresh rank button that recomputes everything
+from fresh readings on the spot. The rank refreshes hourly, keeps two weeks
 of hourly snapshots locally to compute the changes, and needs about five hours of readings to show.
 A Preview picker in Settings shows any rank, and you can point the app at a folder of your own icons
 named `bronze-1` ... `champion-3`, `grand-champion-1` to `-3`, `supersonic-legend`, `unranked`.
