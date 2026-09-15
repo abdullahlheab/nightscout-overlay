@@ -206,7 +206,7 @@ function sendOverview() {
 }
 function toggleOverview() {
   if (overviewWin && !overviewWin.isDestroyed()) { overviewWin.close(); return; }
-  const W = 360, H = 690;
+  const W = 360, H = 590;
   const ob = overlayWin ? overlayWin.getBounds() : { x: 100, y: 100, width: 170, height: 106 };
   const wa = currentWorkArea();
   let x = ob.x + ob.width + 8, y = ob.y;

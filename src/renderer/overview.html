@@ -5,71 +5,100 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:">
 <title>Rank overview</title>
 <style>
-  :root { --fg: #f8fafc; --muted: #94a3b8; --line: rgba(255,255,255,0.08); --up: #22c55e; --down: #ef4444; --accent: #60a5fa; }
+  :root { --fg: #f8fafc; --muted: #94a3b8; --dim: #64748b; --line: rgba(255,255,255,0.08); --up: #22c55e; --down: #ef4444; --warn: #f59e0b; --info: #60a5fa; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: transparent; height: 100%; }
   body { font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif; color: var(--fg); font-size: 13px; -webkit-user-select: none; user-select: none; }
-  #card { position: relative; height: 100%; background: rgba(15, 23, 42, 0.97); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-  #close { position: absolute; top: 8px; right: 10px; width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; }
+  #card { height: 100%; background: rgba(15, 23, 42, 0.97); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+
+  /* toolbar */
+  #bar { display: flex; align-items: center; justify-content: space-between; }
+  #refresh { display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 13px; border-radius: 999px; border: none; background: #2563eb; color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  #refresh:hover { background: #1d4ed8; }
+  #refresh:disabled { background: #334155; color: #cbd5e1; cursor: default; }
+  #refresh svg { width: 14px; height: 14px; }
+  #barRight { display: flex; align-items: center; gap: 8px; }
+  #updated { font-size: 11px; color: var(--muted); }
+  #close { width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
   #close:hover { background: rgba(255,255,255,0.1); color: var(--fg); }
-  #head { display: flex; align-items: center; gap: 12px; }
-  #badge { width: 56px; height: 56px; flex: none; }
+  #err { color: #fca5a5; font-size: 11px; margin-top: -8px; }
+
+  /* hero */
+  #hero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 4px 0 2px; }
+  #badge { width: 84px; height: 84px; }
   #badge img, #badge svg { width: 100%; height: 100%; display: block; }
-  #title { font-size: 18px; font-weight: 700; line-height: 1.1; }
-  #mmrLine { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
-  #mmr { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-  #mmrUnit { color: var(--muted); font-size: 12px; }
-  .delta { font-weight: 700; font-variant-numeric: tabular-nums; }
+  #title { font-size: 18px; font-weight: 700; letter-spacing: 0.01em; }
+  #mmrLine { display: flex; align-items: baseline; gap: 8px; }
+  #mmr { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  #mmrUnit { font-size: 12px; color: var(--muted); }
+  #sub { font-size: 12.5px; font-weight: 700; }
+  #sub.up { color: var(--up); } #sub.down { color: var(--down); } #sub.flat { color: var(--muted); font-weight: 500; }
+  #progress { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+  #track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  #fill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #60a5fa); border-radius: 3px; transition: width .4s; }
+  #next { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+  h3 { margin: 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .section { display: flex; flex-direction: column; gap: 8px; }
+
+  /* parts */
+  #parts { display: flex; flex-direction: column; gap: 7px; }
+  .part { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px 42px; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+  .part .label { font-size: 12px; }
+  .part .track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .part .track div { height: 100%; border-radius: 4px; }
+  .part .val { font-size: 12px; font-weight: 700; text-align: right; }
+  .delta { font-size: 11px; font-weight: 700; text-align: right; }
   .delta.up { color: var(--up); } .delta.down { color: var(--down); } .delta.flat { color: var(--muted); }
-  #sub { color: var(--muted); font-size: 12px; }
-  #bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-  #barFill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #60a5fa); border-radius: 3px; transition: width .4s; }
-  #next { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; margin-top: -4px; }
-  h3 { margin: 4px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  td, th { padding: 5px 0 5px 10px; border-bottom: 1px solid var(--line); text-align: right; font-weight: 500; white-space: nowrap; vertical-align: top; }
-  td:first-child, th:first-child { text-align: left; color: var(--fg); padding-left: 0; width: 100%; white-space: normal; }
-  th { color: var(--muted); font-size: 11px; font-weight: 600; }
-  .why { display: block; color: var(--muted); font-size: 10.5px; font-weight: 400; margin-top: 1px; }
-  tr.total td { font-weight: 700; border-bottom: none; }
-  #foot { color: var(--muted); font-size: 11px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  #refresh { font: inherit; font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: var(--fg); cursor: pointer; white-space: nowrap; }
-  #refresh:hover { background: rgba(255,255,255,0.18); }
-  #refresh:disabled { opacity: 0.6; cursor: default; }
-  #err { color: #fca5a5; font-size: 11px; }
-  #empty { color: var(--muted); padding: 20px 0; text-align: center; }
+
+  /* days */
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) 56px 44px 44px 44px; gap: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .row > div { text-align: right; color: var(--muted); }
+  .row > div:first-child { text-align: left; color: var(--fg); font-weight: 600; }
+  .row .tir { font-weight: 700; color: var(--fg); }
+  .row.head { font-size: 10.5px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .row.head > div { color: var(--dim); font-weight: 500; }
+  .row .lowbad { color: var(--down); }
+  .row .good { color: var(--up); }
+  .soFar { font-size: 10px; color: var(--dim); font-weight: 400; }
+  #empty { color: var(--muted); text-align: center; padding: 12px 0; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
   <div id="card">
-    <button id="close" title="Close (Esc)">&#215;</button>
-    <div id="head">
+    <div id="bar">
+      <button id="refresh" type="button" title="Fetch the latest readings and recompute the rank now">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path><path d="M21 3v6h-6"></path></svg>
+        <span id="refreshText">Refresh rank</span>
+      </button>
+      <div id="barRight"><span id="updated"></span><button id="close" title="Close (Esc)">&#215;</button></div>
+    </div>
+    <div id="err" hidden></div>
+
+    <div id="hero">
       <div id="badge"></div>
-      <div>
-        <div id="title">Unranked</div>
-        <div id="mmrLine"><span id="mmr">--</span><span id="mmrUnit">MMR</span><span id="delta24" class="delta flat"></span></div>
-        <div id="sub"></div>
+      <div id="title">Unranked</div>
+      <div id="mmrLine"><span id="mmr">--</span><span id="mmrUnit">MMR</span></div>
+      <div id="sub" class="flat"></div>
+      <div id="progress">
+        <div id="track"><div id="fill"></div></div>
+        <div id="next"><span id="nextLeft"></span><span id="nextRight"></span></div>
       </div>
     </div>
-    <div id="bar"><div id="barFill"></div></div>
-    <div id="next"><span id="nextLeft"></span><span id="nextRight"></span></div>
 
-    <div id="empty" class="hidden" hidden>Not enough readings yet. The rank needs about five hours of data.</div>
+    <div id="empty" hidden>Not enough readings yet. The rank needs about five hours of data.</div>
 
-    <h3>How the MMR is made up</h3>
-    <table id="parts">
-      <thead><tr><th>Part</th><th>Now</th><th>vs 24h</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div class="section" id="partsSection">
+      <h3>Where the points come from</h3>
+      <div id="parts"></div>
+    </div>
 
-    <h3>Last 3 days</h3>
-    <table id="days">
-      <thead><tr><th>Day</th><th>In range</th><th>Low</th><th>High</th><th>Avg</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <div id="err" hidden></div>
-    <div id="foot"><span id="window"></span><span id="updated"></span><button id="refresh" type="button" title="Fetch the latest readings and recompute the rank now">Refresh rank</button></div>
+    <div class="section" id="daysSection">
+      <h3>Day by day</h3>
+      <div class="row head"><div></div><div>In range</div><div>Low</div><div>High</div><div>Avg</div></div>
+      <div id="days" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
   </div>
   <script src="overview.js"></script>
 </body>
