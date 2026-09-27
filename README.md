@@ -4,6 +4,8 @@ A tiny transparent glucose readout that floats above every other window, includi
 fullscreen apps. It reads from **your own Nightscout site** and shows the current value, trend
 arrow, change since the last reading, how old the reading is, and a mini graph of the last few hours.
 
+![The overlay next to the rank overview](docs/screenshots/overlay-and-rank.png)
+
 - Always on top, frameless, transparent. Drag it anywhere, resize from the corner. Position and size are remembered.
 - Colour-coded by range (green in range, amber low/high, pulsing red urgent, grey when stale). Ranges default to 60 / 70 / 180 / 250 mg/dL and are editable; clear one to use your Nightscout site's value.
 - A Rocket League style **rank and MMR** for your control over the last 3 days: Bronze I up to Supersonic Legend, all 22 ranks with the game's icons and MMR cutoffs. Time in range sets the base, lows and spikes cost points, steadiness earns some. The row shows the MMR and its change since yesterday; click it for a full breakdown and a per-day summary.
@@ -14,6 +16,20 @@ arrow, change since the last reading, how old the reading is, and a mini graph o
 - Runs in the system tray. Nothing else. No accounts, no telemetry, no server in the middle.
 - Updates itself. Installed builds fetch new releases from GitHub in the background and apply them on restart.
 - Windows, macOS and Linux.
+
+## Screenshots
+
+Four looks (frosted glass needs Windows 11, so it is not shown here):
+
+![Dark card, light card and no card](docs/screenshots/looks.png)
+
+The colour follows the reading. An alert adds a glow and an **I see it** button:
+
+![In range, high, and a low alert](docs/screenshots/states.png)
+
+Settings:
+
+<img src="docs/screenshots/settings.png" alt="Settings window" width="420">
 
 ## Install
 
